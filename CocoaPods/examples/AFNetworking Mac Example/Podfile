@@ -1,0 +1,4 @@
+platform :osx
+
+dependency 'FormatterKit'
+dependency 'AFNetworking', '~> 0.7.0'

@@ -5,6 +5,10 @@ ThirdPartTools
 
 ## ChangeLog
 
+2012-06-21 18:14
+
+* Add Cocoapods 0.6.0rc2
+
 2012-06-21
 
 * Split the files into Cocoa Classed, OSX Shell Commands and Other Resources.
@@ -17,6 +21,7 @@ Cocoa Classes
 * EDID
 * feedbackreporter
 * libftdi
+* CocoaPods
 
 OSX Shell Tools
 
