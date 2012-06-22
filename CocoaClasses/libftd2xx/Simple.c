@@ -75,9 +75,9 @@ int simple_readdevice(int devNum,FT_DEVICE_LIST_INFO_NODE *deviceInfo)
             if (ftStatus == FT_OK) {
                 for (int i = 0; i < numDevs; i++) { 
                     printf("Dev %d:\n",i);
-                    printf(" Flags=0x%x\n",devInfo[i].Flags); 
-                    printf(" Type=0x%x\n",devInfo[i].Type); 
-                    printf(" ID=0x%x\n",devInfo[i].ID); 
+                    printf(" Flags=0x%lx\n",devInfo[i].Flags); 
+                    printf(" Type=0x%lx\n",devInfo[i].Type); 
+                    printf(" ID=0x%lx\n",devInfo[i].ID); 
                     printf(" LocId=0x%x\n",devInfo[i].LocId); 
                     printf(" SerialNumber=%s\n",devInfo[i].SerialNumber); 
                     printf(" Description=%s\n",devInfo[i].Description); 
@@ -132,9 +132,9 @@ int simple_2xx(void)
         
             for (int i = 0; i < numDevs; i++) { 
                 printf("Dev %d:\n",i);
-                printf(" Flags=0x%x\n",devInfo[i].Flags); 
-                printf(" Type=0x%x\n",devInfo[i].Type); 
-                printf(" ID=0x%x\n",devInfo[i].ID); 
+                printf(" Flags=0x%lx\n",devInfo[i].Flags); 
+                printf(" Type=0x%lx\n",devInfo[i].Type); 
+                printf(" ID=0x%lx\n",devInfo[i].ID); 
                 printf(" LocId=0x%x\n",devInfo[i].LocId); 
                 printf(" SerialNumber=%s\n",devInfo[i].SerialNumber); 
                 printf(" Description=%s\n",devInfo[i].Description); 
@@ -147,7 +147,7 @@ int simple_2xx(void)
 	ftStatus = FT_ListDevices(pcBufLD, &iNumDevs, FT_LIST_ALL | FT_OPEN_BY_SERIAL_NUMBER);
 	
 	if(ftStatus != FT_OK) {
-        printf("Error: FT_ListDevices(%d)\n", ftStatus);
+        printf("Error: FT_ListDevices(%lu)\n", ftStatus);
 		return 1;
 	}
 
@@ -169,7 +169,7 @@ int simple_2xx(void)
 		 		use lsmod to check this and rmmod ftdi_sio to remove
 				also rmmod usbserial
 		 	*/
-            printf("Error FT_OpenEx(%d), device : %d\n", ftStatus, i);
+            printf("Error FT_OpenEx(%lu), device : %d\n", ftStatus, i);
 			return 1;
 		}
         printf("Opened device %s\n", cBufLD[i]);
@@ -178,7 +178,7 @@ int simple_2xx(void)
 		if((ftStatus = FT_SetBaudRate(ftHandle_simple[i], 115200)) != FT_OK) {
 			
 
-            printf("Error FT_SetBaudRate(%d), cBufLD[i] = %s\n", ftStatus, cBufLD[i]);
+            printf("Error FT_SetBaudRate(%lu), cBufLD[i] = %s\n", ftStatus, cBufLD[i]);
             break;
 		}
 		for(j = 0; j < BUF_SIZE; j++) {
@@ -188,13 +188,13 @@ int simple_2xx(void)
         
         /* Write */
 		if((ftStatus = FT_Write(ftHandle_simple[i], cBufWrite, 2, &dwBytesWritten)) != FT_OK) {
-			printf("Error FT_Write(%d)\n", ftStatus);
+			printf("Error FT_Write(%lu)\n", ftStatus);
 			break;
 		}
         
 		/* Write */
 		if((ftStatus = FT_Write(ftHandle_simple[i], cBufWrite, 12, &dwBytesWritten)) != FT_OK) {
-			printf("Error FT_Write(%d)\n", ftStatus);
+			printf("Error FT_Write(%lu)\n", ftStatus);
 			break;
 		}
 		
@@ -210,7 +210,7 @@ int simple_2xx(void)
 				printf("pcBufRead[%d] = 0x%02X\n", j, pcBufRead_simple[j]);
 			}
 			if((ftStatus = FT_Read(ftHandle_simple[i], pcBufRead_simple, dwRxSize, &dwBytesRead)) != FT_OK) {
-				printf("Error FT_Read(%d)\n", ftStatus);
+				printf("Error FT_Read(%lu)\n", ftStatus);
 			}
 			else {
 				printf("FT_Read = %d\n", dwBytesRead);
@@ -220,7 +220,7 @@ int simple_2xx(void)
 			}
 		}
 		else {
-			printf("Error FT_GetQueueStatus(%d)\n", ftStatus);	
+			printf("Error FT_GetQueueStatus(%lu)\n", ftStatus);	
 		}
 	}
 
