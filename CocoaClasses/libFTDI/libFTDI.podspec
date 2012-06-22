@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
 
   s.source_files = 'CocoaClasses/libFTDI/*.{c,m,h}'
 
-  s.libraries = 'ftdi','usb','usb-compat'
+  s.libraries = 'ftdi.1','usb-1.0.0','usb-0.1.4'
 
   #s.xcconfig = { 'LIBRARY_SEARCH_PATHS' => '/usr/local/lib' }
 

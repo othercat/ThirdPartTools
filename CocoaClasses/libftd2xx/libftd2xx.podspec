@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
 
   s.source_files = 'CocoaClasses/libftd2xx/*.{c,m,h}'
 
-  s.library = 'ftd2xx'
+  s.library = 'ftd2xx.1.1.0'
 
   #s.xcconfig = { 'LIBRARY_SEARCH_PATHS' => '/usr/local/lib' }
 
