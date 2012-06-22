@@ -5,6 +5,10 @@ ThirdPartTools
 
 ## ChangeLog
 
+2012-06-22 09:12
+
+* Add libFTDI(with libusb) and libftd2xx podspec
+
 2012-06-21 18:14
 
 * Add Cocoapods 0.6.0rc2
