@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name     = 'libftd2xx'
-  s.version  = '1.1.0'
+  s.version  = '1.1.10'
   s.license      = { :type => 'Commerical', :file => 'LICENSE', :text => 'Permission is not used without any request' }
 
   s.summary  = 'libftd2xx library is a FTDI communication dynamic libary.'
@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
 
   s.source_files = 'CocoaClasses/libftd2xx/*.{c,m,h}'
 
-  s.library = 'ftd2xx.1.1.0'
+  s.library = 'ftd2xx.1.1.10'
 
   #s.xcconfig = { 'LIBRARY_SEARCH_PATHS' => '/usr/local/lib' }
 
