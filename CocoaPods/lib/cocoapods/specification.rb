@@ -4,7 +4,10 @@ module Pod
   extend Config::Mixin
 
   def self._eval_podspec(path)
-    eval(path.read, nil, path.to_s)
+    string = File.open(path, 'r:utf-8')  { |f| f.read }
+    # TODO: work around for Rubinius incomplete encoding in 1.9 mode
+    string.encode!('UTF-8') if string.respond_to?(:encoding) && string.encoding.name != "UTF-8"
+    eval(string, nil, path.to_s)
   end
 
   class Specification
@@ -35,10 +38,18 @@ module Pod
       end
 
       # multi-platform attributes
-      %w[ source_files resources preserve_paths exclude_header_search_paths frameworks libraries dependencies compiler_flags].each do |attr|
+      %w[ source_files
+          resources
+          preserve_paths
+          exclude_header_search_paths
+          frameworks
+          libraries
+          dependencies
+          compiler_flags ].each do |attr|
         instance_variable_set( "@#{attr}", { :ios => [], :osx => [] } )
       end
       @xcconfig = { :ios => Xcodeproj::Config.new, :osx => Xcodeproj::Config.new }
+      @header_dir = { :ios => nil, :osx => nil }
 
       yield self if block_given?
     end
@@ -58,7 +69,7 @@ module Pod
     # be passed to initalize the value
     def self.top_attr_writer(attr, init_lambda = nil)
       define_method("#{attr}=") do |value|
-        raise Informative, "Can't set `#{attr}' for subspecs." if @parent
+        raise Informative, "#{self.inspect} Can't set `#{attr}' for subspecs." if @parent
         instance_variable_set("@#{attr}",  init_lambda ? init_lambda.call(value) : value);
       end
     end
@@ -119,6 +130,7 @@ module Pod
           libraries=
           compiler_flags=
           deployment_target=
+          header_dir=
           dependency }.each do |method|
         define_method(method) do |args|
           @specification._on_platform(@platform) do
@@ -180,15 +192,9 @@ module Pod
     top_attr_accessor :license,             lambda { |l| ( l.kind_of? String ) ? { :type => l } : l }
     top_attr_accessor :version,             lambda { |v| Version.new(v) }
     top_attr_accessor :authors,             lambda { |a| parse_authors(a) }
-    top_attr_accessor :header_mappings_dir, lambda { |file| Pathname.new(file) } # If not provided the headers files are flattened
-    top_attr_accessor :prefix_header_file,  lambda { |file| Pathname.new(file) }
-    top_attr_accessor :prefix_header_contents
 
     top_attr_reader   :description,         lambda {|instance, ivar| ivar || instance.summary }
     top_attr_writer   :description
-
-    top_attr_reader   :header_dir,          lambda {|instance, ivar| ivar || instance.pod_destroot_name }
-    top_attr_writer   :header_dir,          lambda {|dir| Pathname.new(dir) }
 
     alias_method      :author=, :authors=
 
@@ -203,6 +209,13 @@ module Pod
 
     ### Attributes **with** multiple platform support
 
+    # @todo allow for subspecs
+    #
+    top_attr_accessor :header_mappings_dir, lambda { |file| Pathname.new(file) } # If not provided the headers files are flattened
+    top_attr_accessor :prefix_header_file,  lambda { |file| Pathname.new(file) }
+    top_attr_accessor :prefix_header_contents
+
+
     pltf_chained_attr_accessor  :source_files,                lambda {|value, current| pattern_list(value) }
     pltf_chained_attr_accessor  :resources,                   lambda {|value, current| pattern_list(value) }
     pltf_chained_attr_accessor  :preserve_paths,              lambda {|value, current| pattern_list(value) } # Paths that should not be cleaned
@@ -215,7 +228,28 @@ module Pod
     alias_method :framework=,     :frameworks=
     alias_method :library=,       :libraries=
 
-    platform_attr_writer        :xcconfig,                     lambda {|value, current| current.tap { |c| c.merge!(value) } }
+    # @!method header_dir=
+    #
+    # @abstract The directory where to name space the headers files of
+    #   the specification.
+    #
+    # @param [String] The headers directory.
+    #
+    platform_attr_writer :header_dir, lambda { |dir, _| Pathname.new(dir) }
+
+    # @abstract (see #header_dir=)
+    #
+    # @return [Pathname] The headers directory.
+    #
+    # @note If no value is provided it returns an empty {Pathname}.
+    #
+    def header_dir
+      @header_dir[active_platform] || (@parent.header_dir if @parent) || Pathname.new('')
+    end
+
+    # @!method xcconfig=
+    #
+    platform_attr_writer :xcconfig, lambda {|value, current| current.tap { |c| c.merge!(value) } }
 
     def xcconfig
       raw_xconfig.dup.
@@ -335,12 +369,6 @@ module Pod
         local_path
       else
         config.project_pods_root + top_level_parent.name
-      end
-    end
-
-    def pod_destroot_name
-      if root = pod_destroot
-        root.basename
       end
     end
 

@@ -251,6 +251,12 @@ describe "Pod::Podfile" do
       @podfile.target_definitions[:osx_target].platform.should == :osx
     end
 
+    it "assigs a deployment target to the platforms if not specified" do
+      @podfile.target_definitions[:default].platform.deployment_target.to_s.should == '4.3'
+      @podfile.target_definitions[:test].platform.deployment_target.to_s.should == '4.3'
+      @podfile.target_definitions[:osx_target].platform.deployment_target.to_s.should == '10.6'
+    end
+
     it "autmatically marks a target as exclusive if the parent platform doesn't match" do
       @podfile.target_definitions[:osx_target].should.be.exclusive
       @podfile.target_definitions[:nested_osx_target].should.not.be.exclusive
@@ -310,27 +316,6 @@ describe "Pod::Podfile" do
         target_definition.relative_pods_root
         }.should.raise Pod::Informative
       exception.message.should.include "Xcode project"
-    end
-
-    xit "raises if no platform is specified" do
-      exception = lambda {
-        Pod::Podfile.new {}.validate!
-      }.should.raise Pod::Informative
-      exception.message.should.include "platform"
-    end
-
-    xit "raises if an invalid platform is specified" do
-      exception = lambda {
-        Pod::Podfile.new { platform :windows }.validate!
-      }.should.raise Pod::Informative
-      exception.message.should.include "platform"
-    end
-
-    xit "raises if no dependencies were specified" do
-      exception = lambda {
-        Pod::Podfile.new {}.validate!
-      }.should.raise Pod::Informative
-      exception.message.should.include "dependencies"
     end
   end
 end
