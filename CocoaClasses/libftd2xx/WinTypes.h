@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 typedef unsigned int			DWORD;
-typedef unsigned long			ULONG;
+typedef unsigned int			ULONG;
 typedef unsigned short			USHORT;
 typedef unsigned short			SHORT;
 typedef unsigned char			UCHAR;

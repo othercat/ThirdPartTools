@@ -142,7 +142,7 @@ static int xlibusb_get_device_location_id(struct libusb_device *dev, uint32_t *l
 
     struct darwin_device_priv *dpriv = (struct darwin_device_priv *) ((struct libusb_device *) dev)->os_priv; 
     *locationId = dpriv->location; 
-    printf("LocationID: 0x%lx:", dpriv->location);
+    printf("LocationID: 0x%x:", dpriv->location);
     return 0; 
 } 
 
