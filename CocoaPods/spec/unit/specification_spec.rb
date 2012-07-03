@@ -321,7 +321,7 @@ describe "A Pod::Specification subspec" do
 
   it "automatically forwards top level attributes to the top level parent" do
     @spec.activate_platform(:ios)
-    [:version, :license, :authors, :requires_arc].each do |attr|
+    [:version, :license, :authors, :requires_arc, :compiler_flags].each do |attr|
       @spec.subspecs.first.send(attr).should == @spec.send(attr)
       @spec.subspecs.first.subspecs.first.send(attr).should == @spec.send(attr)
     end
@@ -332,8 +332,10 @@ describe "A Pod::Specification subspec" do
     @spec.source_files.map { |f| f.to_s }.should == %w[ spec.m  ]
     @subspec.source_files.map { |f| f.to_s }.should == %w[ spec.m  subspec_ios.m ]
     @subsubspec.source_files.map { |f| f.to_s }.should == %w[ spec.m  subspec_ios.m subsubspec.m ]
-
     @subsubspec.resources.should == %w[ resource ]
+
+    @subsubspec.compiler_flags = '-Wdeprecated-implementations'
+    @subsubspec.compiler_flags.should == ' -fobjc-arc -Wdeprecated-implementations'
   end
 
   it "returns empty arrays for chained attributes with no value in the chain" do
@@ -382,7 +384,7 @@ describe "A Pod::Specification subspec" do
     @subspec.supports_platform?(:osx).should.be.false
     @subspec.supports_platform?(:ios, '4.0').should.be.true
     @subspec.supports_platform?(:ios, '5.0').should.be.true
-    @subsubspec.supports_platform?(:ios).should.be.false
+    @subsubspec.supports_platform?(:ios).should.be.true
     @subsubspec.supports_platform?(:osx).should.be.false
     @subsubspec.supports_platform?(:ios, '4.0').should.be.false
     @subsubspec.supports_platform?(:ios, '5.0').should.be.true

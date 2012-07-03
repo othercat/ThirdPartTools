@@ -1,12 +1,12 @@
 module Pod
-  VERSION = '0.6.0.rc3'
+  VERSION = '0.6.1'
 
   class PlainInformative < StandardError
   end
 
   class Informative < PlainInformative
     def message
-      #TODO: remove formatting from raise calls and remove conditional
+      # TODO: remove formatting from raise calls and remove conditional
       super !~ /\[!\]/ ? "[!] #{super}\n".red : super
     end
   end
