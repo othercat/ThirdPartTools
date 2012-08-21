@@ -1,6 +1,0 @@
-/* Localized versions of Info.plist keys */
-
-CFBundleName = "AMSerialTest";
-CFBundleShortVersionString = "AMSerialTest version 0.1";
-CFBundleGetInfoString = "AMSerialTest version 0.1, Copyright 2001 iWelt AG.";
-NSHumanReadableCopyright = "Copyright 2001 iWelt AG.";
