@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Connection1</key>
+	<dict>
+		<key>username</key>
+		<string>maymacfis</string>
+		<key>password</key>
+		<string>iacpmacuser</string>
+		<key>servername</key>
+		<string>GreenFISTest</string>
+		<key>dbname</key>
+		<string>MAY_GREEN</string>
+	</dict>
+	<key>Connection2</key>
+	<dict>
+		<key>username</key>
+		<string>maymacfis</string>
+		<key>password</key>
+		<string>macusers</string>
+		<key>dbname</key>
+		<string>MAY_BLACKFISH</string>
+		<key>servername</key>
+		<string>BLACKFISH</string>
+	</dict>
+	<key>Connection3</key>
+	<dict>
+		<key>username</key>
+		<string>maymacfis</string>
+		<key>password</key>
+		<string>macusers</string>
+		<key>servername</key>
+		<string>GreenFIS</string>
+		<key>dbname</key>
+		<string>MAY_GREEN</string>
+	</dict>
+</dict>
+</plist>
