@@ -2,7 +2,7 @@
 //  AMSerialPortAdditions.m
 //
 //  Created by Andreas on Thu May 02 2002.
-//  Copyright (c) 2001-2010 Andreas Mayer. All rights reserved.
+//  Copyright (c) 2001-2011 Andreas Mayer. All rights reserved.
 //
 //  2002-07-02 Andreas Mayer
 //	- initialize buffer in readString
@@ -32,6 +32,8 @@
 //  - the timeout feature (for reading) was broken, now fixed
 //  - don't rely on system clock for measuring elapsed time (because the user can change the clock)
 
+
+#import "AMSDKCompatibility.h"
 
 #import <sys/ioctl.h>
 #import <sys/filio.h>
@@ -162,7 +164,7 @@
 - (BOOL)writeData:(NSData *)data error:(NSError **)error
 {
 #ifdef AMSerialDebug
-	NSString* string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    NSString* string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 	NSLog(@"•wrote: %@ • %@", data, string);
 	[string release];
 #endif
@@ -188,11 +190,14 @@
 	if (error) {
 		NSDictionary *userInfo = nil;
 		if (bytesWritten > 0) {
-			NSNumber* bytesWrittenNum = [NSNumber numberWithUnsignedLongLong:bytesWritten];
+			NSNumber* bytesWrittenNum = [NSNumber numberWithLongLong:bytesWritten];
 			userInfo = [NSDictionary dictionaryWithObject:bytesWrittenNum forKey:@"bytesWritten"];
 		}
 		*error = [NSError errorWithDomain:AMSerialErrorDomain code:errorCode userInfo:userInfo];
 	}
+	
+	// To prevent premature collection.  (Under GC, the given NSData may have no strong references for all we know, and our inner pointer does not keep the NSData alive.  So without this, the data could be collected before we are done with it!)
+	[data self];
 	
 	return result;
 }
@@ -295,10 +300,12 @@
 
 static int64_t AMMicrosecondsSinceBoot (void)
 {
-    NSTimeInterval uptime = [[NSProcessInfo processInfo] systemUptime];
-    int64_t microseconds = uptime * 1000000;
-    
-    return microseconds;
+	AbsoluteTime uptime1 = UpTime();
+	Nanoseconds uptime2 = AbsoluteToNanoseconds(uptime1);
+	uint64_t uptime3 = (((uint64_t)uptime2.hi) << 32) + (uint64_t)uptime2.lo;
+	uint64_t uptime4 = uptime3 / NSEC_PER_USEC;
+	
+	return (int64_t)uptime4;
 }
 
 @implementation AMSerialPort (AMSerialPortAdditionsPrivate)
@@ -310,7 +317,9 @@ static int64_t AMMicrosecondsSinceBoot (void)
 
 - (void)readDataInBackgroundThread
 {
+#if (MAC_OS_X_VERSION_MIN_REQUIRED >= 1060)
 	(void)pthread_setname_np ("de.harmless.AMSerialPort.readDataInBackgroundThread");
+#endif
 	
 	NSData *data = nil;
 	void *localBuffer;
@@ -340,7 +349,7 @@ static int64_t AMMicrosecondsSinceBoot (void)
             data = [NSData dataWithBytes:localBuffer length:bytesRead];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.readDelegate serialPort:self didReadData:data];
-            });      
+            });
         } else {
 #ifdef AMSerialDebug
             NSLog(@"failed to read from port %@, possibly closed", bsdPath);
@@ -424,7 +433,9 @@ static int64_t AMMicrosecondsSinceBoot (void)
 
 - (void)writeDataInBackgroundThread:(NSData *)data
 {
+#if (MAC_OS_X_VERSION_MIN_REQUIRED >= 1060)
 	(void)pthread_setname_np ("de.harmless.AMSerialPort.writeDataInBackgroundThread");
+#endif
 	
 #ifdef AMSerialDebug
 	NSLog(@"writeDataInBackgroundThread");
@@ -538,7 +549,7 @@ static int64_t AMMicrosecondsSinceBoot (void)
 			timeout.tv_sec = (__darwin_time_t)(remainingTimeout / 1000000);
 			timeout.tv_usec = (__darwin_suseconds_t)(remainingTimeout - (timeout.tv_sec * 1000000));
 #ifdef AMSerialDebug
-			NSLog(@"timeout remaining: %qd us = %d s and %d us", remainingTimeout, (int)timeout.tv_sec, timeout.tv_usec);
+			NSLog(@"timeout remaining: %qd us = %ld s and %d us", remainingTimeout, timeout.tv_sec, timeout.tv_usec);
 #endif
 			
 			// If the remaining time is so small that it has rounded to zero, bump it up to 1 microsecond.
@@ -619,7 +630,7 @@ static int64_t AMMicrosecondsSinceBoot (void)
 	}
 	
 #ifdef AMSerialDebug
-	NSString* string = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
+    NSString* string = [[NSString alloc] initWithData:result encoding:NSUTF8StringEncoding];
 	NSLog(@"• read: %@ • %@", result, string);
 	[string release];
 #endif

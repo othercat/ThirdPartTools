@@ -2,7 +2,7 @@
 //  AMSerialPort.h
 //
 //  Created by Andreas on 2002-04-24.
-//  Copyright (c) 2001-2009 Andreas Mayer. All rights reserved.
+//  Copyright (c) 2001-2011 Andreas Mayer. All rights reserved.
 //
 //  2002-09-18 Andreas Mayer
 //  - added available & owner
@@ -56,33 +56,33 @@
 #define B230400	230400
  */
 
-#import <stdio.h>
-#import <string.h>
-#import <unistd.h>
-#import <fcntl.h>
-#import <errno.h>
-#import <paths.h>
-#import <termios.h>
-#import <sys/time.h>
-#import <sysexits.h>
-#import <sys/param.h>
+#import "AMSDKCompatibility.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <paths.h>
+#include <termios.h>
+#include <sys/time.h>
+#include <sysexits.h>
+#include <sys/param.h>
 
 #import <Foundation/Foundation.h>
 
+#define	AMSerialOptionServiceName @"AMSerialOptionServiceName"
+#define	AMSerialOptionSpeed @"AMSerialOptionSpeed"
+#define	AMSerialOptionDataBits @"AMSerialOptionDataBits"
+#define	AMSerialOptionParity @"AMSerialOptionParity"
+#define	AMSerialOptionStopBits @"AMSerialOptionStopBits"
+#define	AMSerialOptionInputFlowControl @"AMSerialOptionInputFlowControl"
+#define	AMSerialOptionOutputFlowControl @"AMSerialOptionOutputFlowControl"
+#define	AMSerialOptionEcho @"AMSerialOptionEcho"
+#define	AMSerialOptionCanonicalMode @"AMSerialOptionCanonicalMode"
+
 // By default, debug code is preprocessed out.  If you would like to compile with debug code enabled,
 // "#define AMSerialDebug" before including any AMSerialPort headers, as in your prefix header
-
-extern NSString * const AMSerialErrorDomain;
-
-extern NSString * const AMSerialOptionServiceName;
-extern NSString * const AMSerialOptionSpeed;
-extern NSString * const AMSerialOptionDataBits;
-extern NSString * const AMSerialOptionParity;
-extern NSString * const AMSerialOptionStopBits;
-extern NSString * const AMSerialOptionInputFlowControl;
-extern NSString * const AMSerialOptionOutputFlowControl;
-extern NSString * const AMSerialOptionEcho;
-extern NSString * const AMSerialOptionCanonicalMode;
 
 typedef enum {	
 	kAMSerialParityNone = 0,
@@ -97,6 +97,13 @@ typedef enum {
 
 // Private constant
 #define AMSER_MAXBUFSIZE  4096UL
+
+extern NSString *const AMSerialErrorDomain;
+
+@interface NSObject (AMSerialDelegate)
+- (void)serialPortReadData:(NSDictionary *)dataDictionary;
+- (void)serialPortWriteProgress:(NSDictionary *)dataDictionary;
+@end
 
 @class AMSerialPort;
 
@@ -115,20 +122,25 @@ typedef enum {
 	NSString *serviceName;
 	NSString *serviceType;
 	int fileDescriptor;
-	struct termios *options;
-	struct termios *originalOptions;
+	struct termios * __strong options;
+	struct termios * __strong originalOptions;
 	NSMutableDictionary *optionsDictionary;
 	NSFileHandle *fileHandle;
+	BOOL gotError;
+	int	lastError;
 	id owner;
-	char *buffer;
+	char * __strong buffer;
 	NSTimeInterval readTimeout; // for public blocking read methods and doRead
-	fd_set *readfds;
-	id <AMSerialPortReadDelegate> readDelegate;
+	fd_set * __strong readfds;
+	//id delegate;
+	//BOOL delegateHandlesReadInBackground;
+	//BOOL delegateHandlesWriteInBackground;
+    id <AMSerialPortReadDelegate> readDelegate;
 	id <AMSerialPortWriteDelegate> writeDelegate;
 	NSLock *writeLock;
 	NSLock *readLock;
 	NSLock *closeLock;
-
+	
 	// used by AMSerialPortAdditions only:
 	id am_readTarget;
 	SEL am_readSelector;
@@ -138,22 +150,24 @@ typedef enum {
 	int countReadInBackgroundThreads;
 }
 
-- (id)initWithPath:(NSString *)path name:(NSString *)name type:(NSString *)type;
+- (id)init:(NSString *)path withName:(NSString *)name type:(NSString *)serialType;
 // initializes port
 // path is a bsdPath
 // name is an IOKit service name
 // type is an IOKit service type
 
-@property (nonatomic, readonly, assign) NSString *bsdPath;
+- (id)initWithPath:(NSString *)path name:(NSString *)name type:(NSString *)type;
+
+- (NSString *)bsdPath;
 // bsdPath (e.g. '/dev/cu.modem')
 
-@property (nonatomic, readonly, assign) NSString *name;
+- (NSString *)name;
 // IOKit service name (e.g. 'modem')
 
-@property (nonatomic, readonly, assign) NSString *type;
+- (NSString *)type;
 // IOKit service type (e.g. kIOSerialBSDRS232Type)
 
-@property (nonatomic, readonly, assign) NSDictionary *properties;
+- (NSDictionary *)properties;
 // IORegistry entry properties - see IORegistryEntryCreateCFProperties()
 
 
@@ -206,25 +220,56 @@ typedef enum {
 // method.
 
 // reading and setting parameters is only useful if the serial port is already open
-// after changing any of the following, one must send commitChanges
-- (long)speed;
-- (int)setSpeed:(long)speed; // returns 0 on success, errno on failure
-@property (nonatomic) unsigned long dataBits; // 5 to 8 (5 may not work)
-@property (nonatomic) AMSerialParity parity;
-@property (nonatomic) AMSerialStopBits stopBits;
-@property (nonatomic, getter=isEchoEnabled) BOOL echoEnabled;
-@property (nonatomic) BOOL RTSInputFlowControl;
-@property (nonatomic) BOOL DTRInputFlowControl;
-@property (nonatomic) BOOL CTSOutputFlowControl;
-@property (nonatomic) BOOL DSROutputFlowControl;
-@property (nonatomic) BOOL CAROutputFlowControl;
-@property (nonatomic) BOOL hangupOnClose;
-@property (nonatomic) BOOL localMode; // YES = ignore modem status lines
-@property (nonatomic) BOOL canonicalMode;
-@property (nonatomic) char endOfLineCharacter;
+- (unsigned long)speed;
+- (BOOL)setSpeed:(unsigned long)speed;
 
-- (int)commitChanges; // returns 0 on success, errno on failure
+- (unsigned long)dataBits;
+- (void)setDataBits:(unsigned long)bits;	// 5 to 8 (5 may not work)
 
+- (AMSerialParity)parity;
+- (void)setParity:(AMSerialParity)newParity;
+
+- (AMSerialStopBits)stopBits;
+- (void)setStopBits:(AMSerialStopBits)numBits;
+
+- (BOOL)echoEnabled;
+- (void)setEchoEnabled:(BOOL)echo;
+
+- (BOOL)RTSInputFlowControl;
+- (void)setRTSInputFlowControl:(BOOL)rts;
+
+- (BOOL)DTRInputFlowControl;
+- (void)setDTRInputFlowControl:(BOOL)dtr;
+
+- (BOOL)CTSOutputFlowControl;
+- (void)setCTSOutputFlowControl:(BOOL)cts;
+
+- (BOOL)DSROutputFlowControl;
+- (void)setDSROutputFlowControl:(BOOL)dsr;
+
+- (BOOL)CAROutputFlowControl;
+- (void)setCAROutputFlowControl:(BOOL)car;
+
+- (BOOL)hangupOnClose;
+- (void)setHangupOnClose:(BOOL)hangup;
+
+- (BOOL)localMode;
+- (void)setLocalMode:(BOOL)local;	// YES = ignore modem status lines
+
+- (BOOL)canonicalMode;
+- (void)setCanonicalMode:(BOOL)flag;
+
+- (char)endOfLineCharacter;
+- (void)setEndOfLineCharacter:(char)eol;
+
+- (void)clearError;			// call this before changing any settings
+- (BOOL)commitChanges;	// call this after using any of the above set... functions
+- (int)errorCode;				// if -commitChanges returns NO, look here for further info
+
+// setting the delegate (for background reading/writing)
+
+//- (id)delegate;
+//- (void)setDelegate:(id)newDelegate;
 
 // setting the delegate (for background reading/writing)
 @property (nonatomic, assign) id <AMSerialPortReadDelegate> readDelegate;
@@ -235,5 +280,6 @@ typedef enum {
 - (void)setReadTimeout:(NSTimeInterval)aReadTimeout;
 
 - (void)readTimeoutAsTimeval:(struct timeval*)timeout;
+
 
 @end

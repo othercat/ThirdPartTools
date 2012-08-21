@@ -24,6 +24,9 @@
 		43AD778B15B070DE004AF39D /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 43AD778815B070DE004AF39D /* MainMenu.nib */; };
 		E15800010C58DE2E00B8171B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		E15800020C58DE2E00B8171B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F5B6E09E02D03CD90100010A /* IOKit.framework */; };
+		EFBE937615E36AA200C9C3C5 /* AMSDKCompatibility.h in Headers */ = {isa = PBXBuildFile; fileRef = EFBE937315E36AA200C9C3C5 /* AMSDKCompatibility.h */; };
+		EFBE937715E36AA200C9C3C5 /* AMStandardEnumerator.h in Headers */ = {isa = PBXBuildFile; fileRef = EFBE937415E36AA200C9C3C5 /* AMStandardEnumerator.h */; };
+		EFBE937815E36AA200C9C3C5 /* AMStandardEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = EFBE937515E36AA200C9C3C5 /* AMStandardEnumerator.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +64,9 @@
 		43AD778915B070DE004AF39D /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = AMSerialTest/English.lproj/MainMenu.nib; sourceTree = SOURCE_ROOT; };
 		E15800080C58DE2F00B8171B /* AMSerialTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AMSerialTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1CC710C106E6C2B00F7D688 /* BSD License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "BSD License.txt"; sourceTree = "<group>"; };
+		EFBE937315E36AA200C9C3C5 /* AMSDKCompatibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSDKCompatibility.h; path = AMSerial/AMSDKCompatibility.h; sourceTree = "<group>"; };
+		EFBE937415E36AA200C9C3C5 /* AMStandardEnumerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMStandardEnumerator.h; path = AMSerial/AMStandardEnumerator.h; sourceTree = "<group>"; };
+		EFBE937515E36AA200C9C3C5 /* AMStandardEnumerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AMStandardEnumerator.m; path = AMSerial/AMStandardEnumerator.m; sourceTree = "<group>"; };
 		F5B6E09E02D03CD90100010A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -90,6 +96,9 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				EFBE937315E36AA200C9C3C5 /* AMSDKCompatibility.h */,
+				EFBE937415E36AA200C9C3C5 /* AMStandardEnumerator.h */,
+				EFBE937515E36AA200C9C3C5 /* AMStandardEnumerator.m */,
 				43AD776215B070AD004AF39D /* AMSerial.h */,
 				43AD776415B070AD004AF39D /* AMSerialErrors.h */,
 				43AD776515B070AD004AF39D /* AMSerialPort.h */,
@@ -210,6 +219,8 @@
 				4370C80E15B077610045F649 /* AMSerialPort.h in Headers */,
 				4370C81115B077680045F649 /* AMSerialPortAdditions.h in Headers */,
 				4370C81215B0776C0045F649 /* AMSerialPortList.h in Headers */,
+				EFBE937615E36AA200C9C3C5 /* AMSDKCompatibility.h in Headers */,
+				EFBE937715E36AA200C9C3C5 /* AMStandardEnumerator.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,6 +322,7 @@
 				4370C7F415B072B30045F649 /* AMSerialPort.m in Sources */,
 				4370C7F515B072B30045F649 /* AMSerialPortAdditions.m in Sources */,
 				4370C7F615B072B30045F649 /* AMSerialPortList.m in Sources */,
+				EFBE937815E36AA200C9C3C5 /* AMStandardEnumerator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
