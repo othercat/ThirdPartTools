@@ -1,0 +1,34 @@
+AMSerialPort classes
+
+(2007-11-06)
+
+Thanks again to Sean McBride and Nick Zitzmann. Sean made the changes necessary for the code to work under 10.5 and garbage collection while Nick contributed the compatibility headers for older SDKs.
+
+The project was tested under Xcode 2.5 and Xcode 3.0. It builds for 10.3.9, 10.4u and 10.5 SDKs, with and without GC enabled.
+
+
+(2007-07-31)
+
+Credits
+-------
+First, I want to thank Nick Zitzmann (www.chronosnet.com) for the added/removed port notifications and Sean McBride for helping with the API redesign as well as the implementation and testing of all new code.
+
+Major Changes
+-------------
+- AMSerialPort API better matches Cocoa design principles
+- added notifications for when serial ports are added/removed
+
+Please see the header files for details.
+
+Notes
+-----
+You may use the 'Deprecated' categories on AMSerialPort and AMSerialPortList to make the transition from previous versions as simple as possible. I still recommend you update your code to use the new API.
+
+For port added/removed notifications to work, you need to send +sharedPortList to AMSerialPortList at least once.
+
+Feedback
+--------
+To give feedback, visit harmless.de/cocoa-code.php or write to andreas@harmless.de. Thanks.
+
+
+Andreas Mayer (andreas@harmless.de)
