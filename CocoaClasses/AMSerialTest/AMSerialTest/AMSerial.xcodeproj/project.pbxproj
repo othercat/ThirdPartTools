@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 42;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -52,6 +52,7 @@
 		E158FF990C58DDAB00B8171B /* AMSerialPortList_Deprecated.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AMSerialPortList_Deprecated.m; path = ../SharedCode/AMSerialPortList_Deprecated.m; sourceTree = SOURCE_ROOT; };
 		E158FF9A0C58DDAB00B8171B /* AMSerialPortList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSerialPortList.h; path = ../SharedCode/AMSerialPortList.h; sourceTree = SOURCE_ROOT; };
 		E158FF9B0C58DDAB00B8171B /* AMSerialPortList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AMSerialPortList.m; path = ../SharedCode/AMSerialPortList.m; sourceTree = SOURCE_ROOT; };
+		E1CC710C106E6C2B00F7D688 /* BSD License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "BSD License.txt"; sourceTree = "<group>"; };
 		E1D8DC0C0CE0F11300306A0A /* AMSDKCompatibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSDKCompatibility.h; path = ../SharedCode/AMSDKCompatibility.h; sourceTree = SOURCE_ROOT; };
 		F5B6E09402D03AB10100010A /* AppController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		F5B6E09502D03AB10100010A /* AppController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
@@ -120,7 +121,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		29B97314FDCFA39411CA2CEA /* AMSerialTest */ = {
+		29B97314FDCFA39411CA2CEA /* AMSerial */ = {
 			isa = PBXGroup;
 			children = (
 				080E96DDFE201D6D7F000001 /* Classes */,
@@ -128,15 +129,15 @@
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
-				E15800070C58DE2E00B8171B /* Info-AMSerialTest.plist */,
 			);
-			name = AMSerialTest;
+			name = AMSerial;
 			sourceTree = "<group>";
 		};
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
 				29B97316FDCFA39411CA2CEA /* main.m */,
+				E15800070C58DE2E00B8171B /* Info-AMSerialTest.plist */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -146,6 +147,7 @@
 			children = (
 				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
+				E1CC710C106E6C2B00F7D688 /* BSD License.txt */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -196,7 +198,7 @@
 			);
 			name = AMSerialTest;
 			productInstallPath = "$(HOME)/Applications";
-			productName = AMSerialTest;
+			productName = AMSerial;
 			productReference = E15800080C58DE2F00B8171B /* AMSerialTest.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -205,11 +207,8 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
-			attributes = {
-				LastUpgradeCheck = 0440;
-			};
-			buildConfigurationList = E13F800C0863426A00EC3999 /* Build configuration list for PBXProject "AMSerialTest" */;
-			compatibilityVersion = "Xcode 3.2";
+			buildConfigurationList = E13F800C0863426A00EC3999 /* Build configuration list for PBXProject "AMSerial" */;
+			compatibilityVersion = "Xcode 2.4";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
@@ -219,7 +218,7 @@
 				German,
 				de,
 			);
-			mainGroup = 29B97314FDCFA39411CA2CEA /* AMSerialTest */;
+			mainGroup = 29B97314FDCFA39411CA2CEA /* AMSerial */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -281,33 +280,33 @@
 		E13F800D0863426A00EC3999 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_OBJC_GC = unsupported;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				GCC_ENABLE_OBJC_GC = NO;
+				GCC_VERSION = 4.0;
 			};
 			name = Development;
 		};
 		E13F800E0863426A00EC3999 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_OBJC_GC = unsupported;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				GCC_ENABLE_OBJC_GC = NO;
+				GCC_VERSION = 4.0;
 			};
 			name = Deployment;
 		};
 		E13F800F0863426A00EC3999 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				GCC_VERSION = 4.0;
 			};
 			name = Default;
 		};
 		E15800040C58DE2E00B8171B /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -319,7 +318,6 @@
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = AMSerialTest;
-				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
 					"-Wmost",
@@ -334,9 +332,9 @@
 		E15800050C58DE2E00B8171B /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
@@ -346,7 +344,6 @@
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = AMSerialTest;
-				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
 					"-Wmost",
@@ -361,7 +358,6 @@
 		E15800060C58DE2E00B8171B /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -372,7 +368,6 @@
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = AMSerialTest;
-				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = (
 					"-Wmost",
@@ -386,7 +381,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E13F800C0863426A00EC3999 /* Build configuration list for PBXProject "AMSerialTest" */ = {
+		E13F800C0863426A00EC3999 /* Build configuration list for PBXProject "AMSerial" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E13F800D0863426A00EC3999 /* Development */,
