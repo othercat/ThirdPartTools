@@ -7,11 +7,27 @@
 
 
 #import "AppController.h"
-#import "AMSerialPortList.h"
-#import "AMSerialPortAdditions.h"
+
+@interface AppController()
+- (void)_setupPort;
+@end
 
 @implementation AppController
 
+@synthesize port;
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    self.port.readDelegate = nil;
+    [self.port free];
+    [port release];
+
+    [super dealloc];
+}
+
+#pragma mark -
 
 - (void)awakeFromNib
 {
@@ -24,66 +40,11 @@
 	[AMSerialPortList sharedPortList]; // initialize port list to arm notifications
 }
 
+#pragma mark - SERIAL PORT READ DELEGATE
 
-- (AMSerialPort *)port
-{
-    return port;
-}
-
-- (void)setPort:(AMSerialPort *)newPort
-{
-    id old = nil;
-
-    if (newPort != port) {
-        old = port;
-        port = [newPort retain];
-        [old release];
-    }
-}
-
-
-- (void)initPort
-{
-	NSString *deviceName = [deviceTextField stringValue];
-	if (![deviceName isEqualToString:[port bsdPath]]) {
-		[port close];
-
-		[self setPort:[[[AMSerialPort alloc] init:deviceName withName:deviceName type:(NSString*)CFSTR(kIOSerialBSDModemType)] autorelease]];
-		
-		// register as self as delegate for port
-		[port setDelegate:self];
-		
-		[outputTextView insertText:@"attempting to open port\r"];
-		[outputTextView setNeedsDisplay:YES];
-		[outputTextView displayIfNeeded];
-		
-		// open port - may take a few seconds ...
-		if ([port open]) {
-			
-			[outputTextView insertText:@"port opened\r"];
-			[outputTextView setNeedsDisplay:YES];
-			[outputTextView displayIfNeeded];
-
-			// listen for data in a separate thread
-			[port readDataInBackground];
-			
-		} else { // an error occured while creating port
-			[outputTextView insertText:@"couldn't open port for device "];
-			[outputTextView insertText:deviceName];
-			[outputTextView insertText:@"\r"];
-			[outputTextView setNeedsDisplay:YES];
-			[outputTextView displayIfNeeded];
-			[self setPort:nil];
-		}
-	}
-}
-
-- (void)serialPortReadData:(NSDictionary *)dataDictionary
+- (void)serialPort:(AMSerialPort *)sendPort didReadData:(NSData *)data
 {
 	// this method is called if data arrives 
-	// @"data" is the actual data, @"serialPort" is the sending port
-	AMSerialPort *sendPort = [dataDictionary objectForKey:@"serialPort"];
-	NSData *data = [dataDictionary objectForKey:@"data"];
 	if ([data length] > 0) {
 		NSString *text = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
 		[outputTextView insertText:text];
@@ -97,6 +58,7 @@
 	[outputTextView displayIfNeeded];
 }
 
+#pragma mark - SERIAL PORT NOTIFICATIONS
 
 - (void)didAddPorts:(NSNotification *)theNotification
 {
@@ -116,13 +78,11 @@
 	[outputTextView setNeedsDisplay:YES];
 }
 
+#pragma mark - ACTIONS
 
 - (IBAction)listDevices:(id)sender
 {
-	// get an port enumerator
-	NSEnumerator *enumerator = [AMSerialPortList portEnumerator];
-	AMSerialPort *aPort;
-	while (aPort = [enumerator nextObject]) {
+    for (AMSerialPort* aPort in [[AMSerialPortList sharedPortList] serialPorts]) {
 		// print port name
 		[outputTextView insertText:[aPort name]];
 		[outputTextView insertText:@":"];
@@ -135,23 +95,60 @@
 - (IBAction)chooseDevice:(id)sender
 {
 	// new device selected
-	[self initPort];
+	[self _setupPort];
 }
 
 - (IBAction)send:(id)sender
 {
 	NSString *sendString = [[inputTextField stringValue] stringByAppendingString:@"\r"];
 
-	if(!port) {
+	if(!self.port) {
 		// open a new port if we don't already have one
-		[self initPort];
+		[self _setupPort];
 	}
 
-	if([port isOpen]) { // in case an error occured while opening the port
-		[port writeString:sendString usingEncoding:NSUTF8StringEncoding error:NULL];
+	if([self.port isOpen]) { // in case an error occured while opening the port
+		[self.port writeString:sendString usingEncoding:NSUTF8StringEncoding error:NULL];
 	}
 }
 
+#pragma mark - PRIVATE
 
+- (void)_setupPort
+{
+    NSString *deviceName = [deviceTextField stringValue];
+	if (![deviceName isEqualToString:self.port.bsdPath]) {
+		[self.port close];
+        self.port = [[AMSerialPortList sharedPortList] serialPortForPath:deviceName];
+		
+		// register as self as delegate for port
+		self.port.readDelegate = self;
+		
+		[outputTextView insertText:@"attempting to open port\r"];
+		[outputTextView setNeedsDisplay:YES];
+		[outputTextView displayIfNeeded];
+		
+		// open port - may take a few seconds ...
+		if ([self.port open]) {
+			
+			[outputTextView insertText:@"port opened\r"];
+			[outputTextView setNeedsDisplay:YES];
+			[outputTextView displayIfNeeded];
+            
+			// listen for data in a separate thread
+			[self.port readDataInBackground];
+			
+		} else { // an error occured while creating port
+			[outputTextView insertText:@"couldn't open port for device "];
+			[outputTextView insertText:deviceName];
+			[outputTextView insertText:@"\r"];
+			[outputTextView setNeedsDisplay:YES];
+			[outputTextView displayIfNeeded];
+
+            self.port.readDelegate = nil;
+            self.port = nil;
+		}
+	}
+}
 
 @end

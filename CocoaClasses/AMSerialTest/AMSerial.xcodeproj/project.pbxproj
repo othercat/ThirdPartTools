@@ -1,0 +1,548 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4370C7F415B072B30045F649 /* AMSerialPort.m in Sources */ = {isa = PBXBuildFile; fileRef = 43AD776615B070AD004AF39D /* AMSerialPort.m */; };
+		4370C7F515B072B30045F649 /* AMSerialPortAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 43AD776815B070AD004AF39D /* AMSerialPortAdditions.m */; };
+		4370C7F615B072B30045F649 /* AMSerialPortList.m in Sources */ = {isa = PBXBuildFile; fileRef = 43AD776A15B070AD004AF39D /* AMSerialPortList.m */; };
+		4370C7FB15B072E30045F649 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F5B6E09E02D03CD90100010A /* IOKit.framework */; };
+		4370C7FC15B072E50045F649 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		4370C7FD15B075960045F649 /* libAMSerial.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 43AD772C15B06C0B004AF39D /* libAMSerial.a */; };
+		4370C80E15B077610045F649 /* AMSerialPort.h in Headers */ = {isa = PBXBuildFile; fileRef = 43AD776515B070AD004AF39D /* AMSerialPort.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4370C81015B077630045F649 /* AMSerial.h in Headers */ = {isa = PBXBuildFile; fileRef = 43AD776215B070AD004AF39D /* AMSerial.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4370C81115B077680045F649 /* AMSerialPortAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 43AD776715B070AD004AF39D /* AMSerialPortAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4370C81215B0776C0045F649 /* AMSerialPortList.h in Headers */ = {isa = PBXBuildFile; fileRef = 43AD776915B070AD004AF39D /* AMSerialPortList.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		43AD777E15B070C0004AF39D /* AppController.h in Headers */ = {isa = PBXBuildFile; fileRef = 43AD777515B070C0004AF39D /* AppController.h */; };
+		43AD777F15B070C0004AF39D /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 43AD777615B070C0004AF39D /* AppController.m */; };
+		43AD778315B070C0004AF39D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 43AD777D15B070C0004AF39D /* main.m */; };
+		43AD778A15B070DE004AF39D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 43AD778615B070DE004AF39D /* InfoPlist.strings */; };
+		43AD778B15B070DE004AF39D /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 43AD778815B070DE004AF39D /* MainMenu.nib */; };
+		E15800010C58DE2E00B8171B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		E15800020C58DE2E00B8171B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F5B6E09E02D03CD90100010A /* IOKit.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		43AD773F15B06D2B004AF39D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 43AD772B15B06C0B004AF39D;
+			remoteInfo = AMSerial;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		43AD771B15B06B51004AF39D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		43AD771E15B06B51004AF39D /* AMSerial-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "AMSerial-Info.plist"; sourceTree = "<group>"; };
+		43AD772015B06B51004AF39D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		43AD772215B06B51004AF39D /* AMSerial-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AMSerial-Prefix.pch"; sourceTree = "<group>"; };
+		43AD772C15B06C0B004AF39D /* libAMSerial.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libAMSerial.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		43AD776215B070AD004AF39D /* AMSerial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSerial.h; path = AMSerial/AMSerial.h; sourceTree = "<group>"; };
+		43AD776415B070AD004AF39D /* AMSerialErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSerialErrors.h; path = AMSerial/AMSerialErrors.h; sourceTree = "<group>"; };
+		43AD776515B070AD004AF39D /* AMSerialPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSerialPort.h; path = AMSerial/AMSerialPort.h; sourceTree = "<group>"; };
+		43AD776615B070AD004AF39D /* AMSerialPort.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AMSerialPort.m; path = AMSerial/AMSerialPort.m; sourceTree = "<group>"; };
+		43AD776715B070AD004AF39D /* AMSerialPortAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSerialPortAdditions.h; path = AMSerial/AMSerialPortAdditions.h; sourceTree = "<group>"; };
+		43AD776815B070AD004AF39D /* AMSerialPortAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AMSerialPortAdditions.m; path = AMSerial/AMSerialPortAdditions.m; sourceTree = "<group>"; };
+		43AD776915B070AD004AF39D /* AMSerialPortList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AMSerialPortList.h; path = AMSerial/AMSerialPortList.h; sourceTree = "<group>"; };
+		43AD776A15B070AD004AF39D /* AMSerialPortList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AMSerialPortList.m; path = AMSerial/AMSerialPortList.m; sourceTree = "<group>"; };
+		43AD777515B070C0004AF39D /* AppController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppController.h; path = AMSerialTest/AppController.h; sourceTree = SOURCE_ROOT; };
+		43AD777615B070C0004AF39D /* AppController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppController.m; path = AMSerialTest/AppController.m; sourceTree = SOURCE_ROOT; };
+		43AD777C15B070C0004AF39D /* Info-AMSerialTest.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-AMSerialTest.plist"; path = "AMSerialTest/Info-AMSerialTest.plist"; sourceTree = SOURCE_ROOT; };
+		43AD777D15B070C0004AF39D /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = AMSerialTest/main.m; sourceTree = SOURCE_ROOT; };
+		43AD778715B070DE004AF39D /* English */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = English; path = AMSerialTest/English.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
+		43AD778915B070DE004AF39D /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = AMSerialTest/English.lproj/MainMenu.nib; sourceTree = SOURCE_ROOT; };
+		E15800080C58DE2F00B8171B /* AMSerialTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AMSerialTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1CC710C106E6C2B00F7D688 /* BSD License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "BSD License.txt"; sourceTree = "<group>"; };
+		F5B6E09E02D03CD90100010A /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		43AD772915B06C0B004AF39D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4370C7FC15B072E50045F649 /* Cocoa.framework in Frameworks */,
+				4370C7FB15B072E30045F649 /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E15800000C58DE2E00B8171B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4370C7FD15B075960045F649 /* libAMSerial.a in Frameworks */,
+				E15800010C58DE2E00B8171B /* Cocoa.framework in Frameworks */,
+				E15800020C58DE2E00B8171B /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		080E96DDFE201D6D7F000001 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				43AD776215B070AD004AF39D /* AMSerial.h */,
+				43AD776415B070AD004AF39D /* AMSerialErrors.h */,
+				43AD776515B070AD004AF39D /* AMSerialPort.h */,
+				43AD776615B070AD004AF39D /* AMSerialPort.m */,
+				43AD776715B070AD004AF39D /* AMSerialPortAdditions.h */,
+				43AD776815B070AD004AF39D /* AMSerialPortAdditions.m */,
+				43AD776915B070AD004AF39D /* AMSerialPortList.h */,
+				43AD776A15B070AD004AF39D /* AMSerialPortList.m */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
+				F5B6E09E02D03CD90100010A /* IOKit.framework */,
+				43AD771B15B06B51004AF39D /* CoreData.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E15800080C58DE2F00B8171B /* AMSerialTest.app */,
+				43AD772C15B06C0B004AF39D /* libAMSerial.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* AMSerial */ = {
+			isa = PBXGroup;
+			children = (
+				080E96DDFE201D6D7F000001 /* Classes */,
+				43AD773E15B06CE2004AF39D /* Test Application */,
+				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				43AD771C15B06B51004AF39D /* AMSerial */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			name = AMSerial;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E1CC710C106E6C2B00F7D688 /* BSD License.txt */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
+				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		43AD771C15B06B51004AF39D /* AMSerial */ = {
+			isa = PBXGroup;
+			children = (
+				43AD771D15B06B51004AF39D /* Supporting Files */,
+			);
+			path = AMSerial;
+			sourceTree = "<group>";
+		};
+		43AD771D15B06B51004AF39D /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				43AD771E15B06B51004AF39D /* AMSerial-Info.plist */,
+				43AD771F15B06B51004AF39D /* InfoPlist.strings */,
+				43AD772215B06B51004AF39D /* AMSerial-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		43AD773E15B06CE2004AF39D /* Test Application */ = {
+			isa = PBXGroup;
+			children = (
+				43AD777515B070C0004AF39D /* AppController.h */,
+				43AD777615B070C0004AF39D /* AppController.m */,
+				43AD777C15B070C0004AF39D /* Info-AMSerialTest.plist */,
+				43AD778615B070DE004AF39D /* InfoPlist.strings */,
+				43AD778815B070DE004AF39D /* MainMenu.nib */,
+				43AD777D15B070C0004AF39D /* main.m */,
+			);
+			path = "Test Application";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		43AD772A15B06C0B004AF39D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4370C81015B077630045F649 /* AMSerial.h in Headers */,
+				4370C80E15B077610045F649 /* AMSerialPort.h in Headers */,
+				4370C81115B077680045F649 /* AMSerialPortAdditions.h in Headers */,
+				4370C81215B0776C0045F649 /* AMSerialPortList.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E158FFEB0C58DE2E00B8171B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43AD777E15B070C0004AF39D /* AppController.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		43AD772B15B06C0B004AF39D /* AMSerial */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 43AD773415B06C0B004AF39D /* Build configuration list for PBXNativeTarget "AMSerial" */;
+			buildPhases = (
+				43AD772815B06C0B004AF39D /* Sources */,
+				43AD772915B06C0B004AF39D /* Frameworks */,
+				43AD772A15B06C0B004AF39D /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AMSerial;
+			productName = AMSerial;
+			productReference = 43AD772C15B06C0B004AF39D /* libAMSerial.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		E158FFEA0C58DE2E00B8171B /* AMSerialTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E15800030C58DE2E00B8171B /* Build configuration list for PBXNativeTarget "AMSerialTest" */;
+			buildPhases = (
+				E158FFEB0C58DE2E00B8171B /* Headers */,
+				E158FFF40C58DE2E00B8171B /* Resources */,
+				E158FFF70C58DE2E00B8171B /* Sources */,
+				E15800000C58DE2E00B8171B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				43AD774015B06D2B004AF39D /* PBXTargetDependency */,
+			);
+			name = AMSerialTest;
+			productInstallPath = "$(HOME)/Applications";
+			productName = AMSerial;
+			productReference = E15800080C58DE2F00B8171B /* AMSerialTest.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0450;
+			};
+			buildConfigurationList = E13F800C0863426A00EC3999 /* Build configuration list for PBXProject "AMSerial" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+				de,
+				en,
+			);
+			mainGroup = 29B97314FDCFA39411CA2CEA /* AMSerial */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E158FFEA0C58DE2E00B8171B /* AMSerialTest */,
+				43AD772B15B06C0B004AF39D /* AMSerial */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E158FFF40C58DE2E00B8171B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43AD778A15B070DE004AF39D /* InfoPlist.strings in Resources */,
+				43AD778B15B070DE004AF39D /* MainMenu.nib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		43AD772815B06C0B004AF39D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4370C7F415B072B30045F649 /* AMSerialPort.m in Sources */,
+				4370C7F515B072B30045F649 /* AMSerialPortAdditions.m in Sources */,
+				4370C7F615B072B30045F649 /* AMSerialPortList.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E158FFF70C58DE2E00B8171B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43AD777F15B070C0004AF39D /* AppController.m in Sources */,
+				43AD778315B070C0004AF39D /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		43AD774015B06D2B004AF39D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 43AD772B15B06C0B004AF39D /* AMSerial */;
+			targetProxy = 43AD773F15B06D2B004AF39D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		43AD771F15B06B51004AF39D /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				43AD772015B06B51004AF39D /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		43AD778615B070DE004AF39D /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				43AD778715B070DE004AF39D /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		43AD778815B070DE004AF39D /* MainMenu.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				43AD778915B070DE004AF39D /* English */,
+			);
+			name = MainMenu.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		43AD773515B06C0B004AF39D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "AMSerial/AMSerial-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = "include/$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		43AD773615B06C0B004AF39D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "AMSerial/AMSerial-Prefix.pch";
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = "include/$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		D80CAA6A13946E1D00F6F861 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_GC = unsupported;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					DEBUG,
+					AMSerialDebug,
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ONLY_ACTIVE_ARCH = YES;
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx;
+				WARNING_CFLAGS = "-Wall";
+			};
+			name = Debug;
+		};
+		D80CAA6B13946E1D00F6F861 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "AMSerialTest/Info-AMSerialTest.plist";
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-all_load",
+				);
+				PRODUCT_NAME = AMSerialTest;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Debug;
+		};
+		D80CAA6C13946E2600F6F861 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_GC = unsupported;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx;
+				WARNING_CFLAGS = "-Wall";
+			};
+			name = Release;
+		};
+		D80CAA6D13946E2600F6F861 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = "AMSerialTest/Info-AMSerialTest.plist";
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-all_load",
+				);
+				PRODUCT_NAME = AMSerialTest;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		43AD773415B06C0B004AF39D /* Build configuration list for PBXNativeTarget "AMSerial" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				43AD773515B06C0B004AF39D /* Debug */,
+				43AD773615B06C0B004AF39D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E13F800C0863426A00EC3999 /* Build configuration list for PBXProject "AMSerial" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D80CAA6A13946E1D00F6F861 /* Debug */,
+				D80CAA6C13946E2600F6F861 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E15800030C58DE2E00B8171B /* Build configuration list for PBXNativeTarget "AMSerialTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D80CAA6B13946E1D00F6F861 /* Debug */,
+				D80CAA6D13946E2600F6F861 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}
