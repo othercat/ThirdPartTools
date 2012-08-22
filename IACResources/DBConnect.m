@@ -17,25 +17,25 @@
 	NSError *e;
 	// Read the contents of file
 	NSData *d = [NSData dataWithContentsOfFile:fileName options:0 error:&e];
-	NSString *contentsOfString = [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
-	NSLog(@"%@",contentsOfString);
+	//NSString *contentsOfString = [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
+	//DLog(@"%@",contentsOfString);
 	if (d == nil)
 	{
-		NSLog(@"Read failed: %@", [e localizedDescription]);
+		DLog(@"Read failed: %@", [e localizedDescription]);
 	}
 	
 	// Set Data
 	const char *utfString = [contentOfScript UTF8String];
 	NSData *d2 = [NSData dataWithBytes:utfString length:strlen(utfString)];
 	
-	NSString *newContentsOfString2 = [[NSString alloc] initWithData:d2 encoding:NSUTF8StringEncoding];
-	NSLog(@"%@",newContentsOfString2);
+	//NSString *newContentsOfString2 = [[NSString alloc] initWithData:d2 encoding:NSUTF8StringEncoding];
+	//DLog(@"%@",newContentsOfString2);
 	
 	// rewrite the contents of file
 	[d2 writeToFile:fileName options:0 error:&e];
 	if (d2 == nil)
 	{
-		NSLog(@"Write failed: %@", [e localizedDescription]);
+		DLog(@"Write failed: %@", [e localizedDescription]);
 	}
 }
 

@@ -42,7 +42,7 @@
 	}
 	@catch (NSException *exception) {
 		// NSRunAlertPanel(@"Exception", [NSString stringWithFormat:@"Error: %@", [exception reason]],@"OK",nil,nil);
-		NSRunAlertPanel(@"Exception", [NSString stringWithFormat:@"Error: SFC is not ready", [exception reason]],@"OK",nil,nil);
+		NSRunAlertPanel(@"Exception", [NSString stringWithFormat:@"Error: SFC is not ready:%@", [exception reason]],@"OK",nil,nil);
 		return nil;
 	}
 	return nil; 
@@ -74,7 +74,7 @@
 											 servername:serverName 
 											     dbname:dbName
    										       commands:commandString];
-		NSString *regionKey = [[NSString alloc] initWithFormat:[regionKeyArray objectAtIndex:0]];
+		NSString *regionKey = [[NSString alloc] initWithFormat:@"%@",[regionKeyArray objectAtIndex:0]];
 		[DBConnections release];
 		[regionKeyDBConnect release];
 		[regionKeyArray release];
@@ -112,7 +112,7 @@
 											 servername:serverName 
 											     dbname:dbName
 											   commands:commandString];
-		NSString *mpnCode = [[NSString alloc] initWithFormat:[mpnArray objectAtIndex:0]];
+		NSString *mpnCode = [[NSString alloc] initWithFormat:@"%@",[mpnArray objectAtIndex:0]];
 		[DBConnections release];
 		[mpnDBConnect release];
 		[mpnArray release];
@@ -517,7 +517,7 @@
 									FGSN,stationName,version,lineName,testItem,testValue,Unit,Up_LIM,Down_LIM,defectCode];	
 		}
 
-		NSLog(@"%@",commandString);
+		DLog(@"%@",commandString);
 	
 		DBConnect *testFailCFGSNDBConnect = [[DBConnect alloc] init];
 		NSArray * testFailItems = [testFailCFGSNDBConnect queryDataRetWithSemicolon:userName 
@@ -695,7 +695,7 @@
 	else if ([[CFGSNArray objectAtIndex:0] isEqualToString:@"1"])
 	{
 		NSMutableArray	*tmpArray = [[NSMutableArray alloc] init];
-		NSString *message = [[NSString alloc] initWithFormat:@"序号:%@ 验证失败,序号不存在"];
+		NSString *message = [[NSString alloc] initWithFormat:@"序号:%@ 验证失败,序号不存在",FGSN];
 		[tmpArray addObject:@"1"];
 		[tmpArray addObject:message];
 		return tmpArray;
@@ -735,7 +735,7 @@
 	NSMutableString *commandString = [[NSMutableString alloc] init];
 	commandString = [NSMutableString stringWithFormat:@"exec uspSFCUploadCB '%@', '%@', '%@', '%@', '%@', '%@', '%@'",CustomSN,stationName,lineName,testItem,testValue,retestCount,userId];	
 	
-	NSLog(@"%@",commandString);
+	DLog(@"%@",commandString);
 	
 	DBConnect *uploadCBConnect = [[DBConnect alloc] init];
 	NSArray * uploadCB = [uploadCBConnect queryDataRetWithSemicolon:userName 
