@@ -29,6 +29,29 @@
 
 // upload MLB result
 - (NSArray *)uploadResultCMLBSN:(NSString *)MLBSN station:(NSString *)stationName SWVersion:(NSString *)version TestResult:(NSString *)testResult;
+// 輸出:以Array方式輸出, array[0]為0(成功)或1(失敗), array[1]為錯誤訊息
+- (NSArray *)uploadResultCFGSN:(NSString *)FGSN
+                       station:(NSString *)stationName
+                     SWVersion:(NSString *)SoftWareVersion
+                    TestResult:(NSString *)testResult
+                     Modelname:(NSString *)ModelName
+                     FixtureID:(NSString *)fixtureId
+						UserID:(NSString *)userId
+                      linename:(NSString *)LineName
+                         MLBSN:(NSString *)MLBSerialNumber
+                      NandSize:(NSString *)nandSize
+                WIFIMACAddress:(NSString *)wifiMacAddress
+                  BTMACAddress:(NSString *)btMacAddress
+                     BatterySN:(NSString *)batterySN
+                       GrapeSN:(NSString *)grapeSN
+                    LCDPanelID:(NSString *)LCDPanelId
+               BuildMatrixType:(NSString *)matrixType
+             BuildMatrixConfig:(NSString *)matrixConfig
+         BuildMatrixUnitNumber:(NSString *)matrixUnitNumber
+						ReTest:(NSString *)retest
+                       TopFlex:(NSString *)topFlex
+                       IsWaive:(NSString *)isWaive
+						NandID:(NSString *)nandId;
 // upload SN result
 - (NSArray *)uploadResultCFGSN:(NSString *)FGSN 
 						station:(NSString *)stationName 

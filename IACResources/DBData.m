@@ -401,6 +401,63 @@
 
 // 用途:check upload FGSN測試結果至DB是否成功
 // 輸入:FGSN(11碼序號), station name, software version(V1.0), 測試結果(Pass or Fail), Model Name(MPNBurn傳此參數),
+//     FixtureID(測試站的設備名稱), User ID(測試站執行人員的工號), Line Name(測試站的線別名稱),
+//	   MLN SN, Nand Size, WIFI MacAddress, BT MacAddress, Battery SN, Grape SN, LCD Panel ID,
+//	   BuildMatrixType, BuildMatrixConfig, BuildMatrixUnitNumber, ReTest
+//     總共19個參數
+// 輸出:以Array方式輸出, array[0]為0(成功)或1(失敗), array[1]為錯誤訊息
+- (NSArray *)uploadResultCFGSN:(NSString *)FGSN
+                       station:(NSString *)stationName
+                     SWVersion:(NSString *)SoftWareVersion
+                    TestResult:(NSString *)testResult
+                     Modelname:(NSString *)ModelName
+                     FixtureID:(NSString *)fixtureId
+						UserID:(NSString *)userId
+                      linename:(NSString *)LineName
+                         MLBSN:(NSString *)MLBSerialNumber
+                      NandSize:(NSString *)nandSize
+                WIFIMACAddress:(NSString *)wifiMacAddress
+                  BTMACAddress:(NSString *)btMacAddress
+                     BatterySN:(NSString *)batterySN
+                       GrapeSN:(NSString *)grapeSN
+                    LCDPanelID:(NSString *)LCDPanelId
+               BuildMatrixType:(NSString *)matrixType
+             BuildMatrixConfig:(NSString *)matrixConfig
+         BuildMatrixUnitNumber:(NSString *)matrixUnitNumber
+						ReTest:(NSString *)retest
+                       TopFlex:(NSString *)topFlex
+                       IsWaive:(NSString *)isWaive
+						NandID:(NSString *)nandId
+{
+    // 讀取DBConnections.plist
+    NSBundle *bundleDBConnection = [NSBundle mainBundle];
+    NSString *pathOfDBBundle = [bundleDBConnection pathForResource:@"DBConnections" ofType:@"plist"];
+    NSDictionary *DBConnections = [[NSDictionary alloc] initWithContentsOfFile:pathOfDBBundle];
+    // 依據不同需求,選擇不同的connection
+    NSDictionary *connectionData = [DBConnections objectForKey:@"Connection2"];
+    
+    NSString *userName = [connectionData objectForKey:@"username"];
+    NSString *passWord = [connectionData objectForKey:@"password"];
+    NSString *serverName = [connectionData objectForKey:@"servername"];
+    NSString *dbName = [connectionData objectForKey:@"dbname"];
+    
+    // 利用NSString本身提供的方法,將字串與參數串連起來成為一個新字串
+    NSString *commandString = [[NSString alloc] initWithFormat:@"exec uspSFCUploadResultCFGSN '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@','%@','%@','%@'",FGSN,stationName,SoftWareVersion,testResult,ModelName,fixtureId,userId,LineName,MLBSerialNumber,nandSize,wifiMacAddress,btMacAddress,batterySN,grapeSN,LCDPanelId,matrixType,matrixConfig,matrixUnitNumber,retest,topFlex,isWaive,nandId];
+    
+    DBConnect *uploadCFGSNDBConnect = [[DBConnect alloc] init];
+    NSArray * uploadCFGSNResult = [uploadCFGSNDBConnect queryDataRetWithSemicolon:userName
+                                                                         password:passWord 
+                                                                       servername:serverName 
+                                                                           dbname:dbName
+                                                                         commands:commandString];
+    [DBConnections release];
+    return [uploadCFGSNResult autorelease];
+    
+}
+
+
+// 用途:check upload FGSN測試結果至DB是否成功
+// 輸入:FGSN(11碼序號), station name, software version(V1.0), 測試結果(Pass or Fail), Model Name(MPNBurn傳此參數),
 //     FixtureID(測試站的設備名稱), User ID(測試站執行人員的工號), Line Name(測試站的線別名稱), 
 //	   MLN SN, Nand Size, WIFI MacAddress, BT MacAddress, Battery SN, Grape SN, LCD Panel ID,
 //	   BuildMatrixType, BuildMatrixConfig, BuildMatrixUnitNumber, ReTest
