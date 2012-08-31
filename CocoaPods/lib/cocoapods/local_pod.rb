@@ -38,6 +38,13 @@ module Pod
     #
     attr_reader :platform
 
+    # @return [Boolean] Wether or not the pod has been downloaded in the
+    #                   current install process and still needs its docs
+    #                   generated and be cleaned.
+    #
+    attr_accessor :downloaded
+    alias_method :downloaded?, :downloaded
+
     # @param [Specification] specification
     #   The first activated specification of the pod.
     # @param [Sandbox] sandbox
@@ -139,7 +146,7 @@ module Pod
     #
     # @return [void]
     #
-    def clean
+    def clean!
       clean_paths.each { |path| FileUtils.rm_rf(path) }
       @cleaned = true
     end
@@ -185,6 +192,15 @@ module Pod
       source_files.map{ |p| p.relative_path_from(@sandbox.root) }
     end
 
+    def relative_source_files_by_spec
+      result = {}
+      source_files_by_spec.each do |spec, paths|
+        result[spec] = paths.map{ |p| p.relative_path_from(@sandbox.root) }
+      end
+      result
+    end
+
+
     # Finds the source files that every activated {Specification} requires.
     #
     # @note If the same file is required by two specifications the one at the
@@ -222,6 +238,28 @@ module Pod
       result
     end
 
+    # @return [Hash{Specification => Array<Pathname>}] The paths of the header
+    #   files grouped by {Specification} that should be copied in the public
+    #   folder.
+    #
+    #   If a spec does not match any public header it means that all the
+    #   header files (i.e. the build ones) are intended to be public.
+    #
+    def public_header_files_by_spec
+      public_headers = paths_by_spec(:public_header_files, :glob => '*.h')
+      build_headers  = header_files_by_spec
+
+      result = {}
+      specifications.each do |spec|
+        if (public_h = public_headers[spec]) && !public_h.empty?
+          result[spec] = public_h
+        elsif (build_h = build_headers[spec]) && !build_h.empty?
+          result[spec] = build_h
+        end
+      end
+      result
+    end
+
     # @return [Array<Pathname>] The paths of the resources.
     #
     def resource_files
@@ -255,7 +293,7 @@ module Pod
     #  file.
     #
     def readme_file
-      expanded_paths(%w[ README{*,.*} readme{*,.*} ]).first
+      expanded_paths(%w[ readme{*,.*} ]).first
     end
 
     # @return [Pathname] The absolute path of the license file from the
@@ -265,7 +303,7 @@ module Pod
       if top_specification.license && top_specification.license[:file]
         root + top_specification.license[:file]
       else
-        expanded_paths(%w[ LICENSE{*,.*} licence{*,.*} ]).first
+        expanded_paths(%w[ licen{c,s}e{*,.*} ]).first
       end
     end
 
@@ -287,27 +325,35 @@ module Pod
     end
 
     # Computes the paths of all the public headers of the pod including every
-    # subspec. For this reason the pod must not be cleaned before calling it.
+    # subspec (activated or not).
+    # For this reason the pod must not be cleaned when calling this command.
     #
     # This method is used by {Generator::Documentation}.
     #
     # @raise [Informative] If the pod was cleaned.
     #
-    # @todo Merge with #221
-    #
     # @return [Array<Pathname>] The path of all the public headers of the pod.
     #
-    def all_specs_public_header_files
+    def documentation_headers
       if @cleaned
-        raise Informative, "The pod is cleaned and cannot compute the all the "\
-          "header files as they might be deleted."
+        raise Informative, "The pod is cleaned and cannot compute the " \
+                           "header files, as some might have been deleted."
       end
 
-      all_specs = [ top_specification ] + top_specification.subspecs
-      options   = {:glob => '*.{h}'}
-      files     = paths_by_spec(:source_files, options, all_specs).values.flatten!
-      headers   = files.select { |f| f.extname == '.h' }
-      headers
+      specs = [top_specification] + top_specification.recursive_subspecs
+      source_files   = paths_by_spec(:source_files, { :glob => '*.{h}'}, specs)
+      public_headers = paths_by_spec(:public_header_files,{ :glob => '*.{h}'}, specs)
+
+      result = []
+      specs.each do |spec|
+        if (public_h = public_headers[spec]) && !public_h.empty?
+          result += public_h
+        elsif (source_f = source_files[spec]) && !source_f.empty?
+          build_h = source_f.select { |f| f.extname == '.h' }
+          result += build_h unless build_h.empty?
+        end
+      end
+      result
     end
 
     # @!group Target integration
@@ -315,9 +361,15 @@ module Pod
     # @return [void] Copies the pods headers to the sandbox.
     #
     def link_headers
-      @sandbox.add_header_search_path(headers_sandbox)
-      header_mappings.each do |namespaced_path, files|
-        @sandbox.add_header_files(namespaced_path, files)
+      @sandbox.build_headers.add_search_path(headers_sandbox)
+      @sandbox.public_headers.add_search_path(headers_sandbox)
+
+      header_mappings(header_files_by_spec).each do |namespaced_path, files|
+        @sandbox.build_headers.add_files(namespaced_path, files)
+      end
+
+      header_mappings(public_header_files_by_spec).each do |namespaced_path, files|
+        @sandbox.public_headers.add_files(namespaced_path, files)
       end
     end
 
@@ -369,9 +421,9 @@ module Pod
     #
     # @todo This is not overridden anymore in specification refactor and the
     #   code Pod::Specification#copy_header_mapping can be moved here.
-    def header_mappings
+    def header_mappings(files_by_spec)
       mappings = {}
-      header_files_by_spec.each do |spec, paths|
+      files_by_spec.each do |spec, paths|
         paths = paths - headers_excluded_from_search_paths
         paths.each do |from|
           from_relative = from.relative_path_from(root)
@@ -382,6 +434,9 @@ module Pod
       mappings
     end
 
+    # @return <Pathname> The name of the folder where the headers of this pod
+    #   will be namespaced.
+    #
     def headers_sandbox
       @headers_sandbox ||= Pathname.new(top_specification.name)
     end
@@ -450,7 +505,7 @@ module Pod
         if pattern.directory? && options[:glob]
           pattern += options[:glob]
         end
-        pattern.glob
+        Pathname.glob(pattern, File::FNM_CASEFOLD)
       end.flatten
     end
   end

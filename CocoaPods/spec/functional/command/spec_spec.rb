@@ -34,6 +34,7 @@ describe "Pod::Command::Spec#create" do
     spec.source.should       == { :git => 'http://EXAMPLE/Bananas.git', :tag => '0.0.1' }
     spec.description.should  == 'A short description of Bananas.'
     spec.source_files.should == ['Classes', 'Classes/**/*.{h,m}']
+    spec.public_header_files.should == []
   end
 
   it "correctly creates a podspec from github" do
@@ -96,17 +97,6 @@ describe "Pod::Command::Spec#lint" do
   extend SpecHelper::TemporaryDirectory
   extend SpecHelper::TemporaryRepos
 
-  before do
-    config.repos_dir = fixture('spec-repos')
-  end
-
-  it "lints a repo" do
-    # The fixture has warnings so it raises
-    cmd = command('spec', 'lint', "#{config.repos_dir}/master")
-    lambda { cmd.run }.should.raise Pod::Informative
-    cmd.output.should.include "WARN"
-  end
-
   it "complains if it can't find any spec to lint" do
     Dir.chdir(temporary_directory) do
       lambda { command('spec', 'lint').run }.should.raise Pod::Informative
@@ -115,8 +105,16 @@ describe "Pod::Command::Spec#lint" do
 
   it "lints the current working directory" do
     Dir.chdir(fixture('spec-repos') + 'master/JSONKit/1.4/') do
-      output = command('spec', 'lint', '--quick', '--only-errors').run
-      output.should.include "passed validation"
+      cmd = command('spec', 'lint', '--quick', '--only-errors')
+      cmd.run
+      cmd.output.should.include "passed validation"
+    end
+  end
+
+  it "lints a remote podspec" do
+    Dir.chdir(fixture('spec-repos') + 'master/JSONKit/1.4/') do
+      cmd = command('spec', 'lint', '--quick', '--only-errors', '--silent', 'https://github.com/CocoaPods/Specs/raw/master/A2DynamicDelegate/2.0.1/A2DynamicDelegate.podspec')
+      VCR.use_cassette('linter', :record => :new_episodes) { lambda { cmd.run }.should.not.raise }
     end
   end
 

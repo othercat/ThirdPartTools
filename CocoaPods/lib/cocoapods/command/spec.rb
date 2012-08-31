@@ -11,12 +11,11 @@ module Pod
       Creates a PodSpec, in the current working dir, called `NAME.podspec'.
       If a GitHub url is passed the spec is prepopulated.
 
-    $ pod spec lint [ NAME.podspec | DIRECTORY ]
+    $ pod spec lint [ NAME.podspec | DIRECTORY | http://PATH/NAME.podspec, ... ]
 
-      Validates `NAME.podspec'. If a directory is provided it performs a quick
-      validation on all the podspec files found, including subfolders. In case
-      the argument is omitted, it defaults to the current working dir.
-      }
+      Validates `NAME.podspec'. If a directory is provided it validates
+      the podspec files found, including subfolders. In case
+      the argument is omitted, it defaults to the current working dir.}
       end
 
       def self.options
@@ -31,16 +30,15 @@ module Pod
           @name_or_url     = argv.shift_argument
           @url             = argv.shift_argument
           super if @name_or_url.nil?
+          super unless argv.empty?
         elsif @action == 'lint'
-          @quick           = argv.option('--quick')
-          @only_errors     = argv.option('--only-errors')
-          @no_clean        = argv.option('--no-clean')
-          @repo_or_podspec = argv.shift_argument unless argv.empty?
-          super unless argv.size <= 1
+          @quick          = argv.option('--quick')
+          @only_errors    = argv.option('--only-errors')
+          @no_clean       = argv.option('--no-clean')
+          @podspecs_paths = argv
         else
           super
         end
-        super unless argv.empty?
       end
 
       def run
@@ -72,348 +70,83 @@ module Pod
 
       def lint
         puts
-        invalid_count = lint_podspecs
-        count = specs_to_lint.count
+        invalid_count = 0
+        podspecs_to_lint.each do |podspec|
+          linter          = Linter.new(podspec)
+          linter.quick    = @quick
+          linter.no_clean = @no_clean
+
+          # Show immediatly which pod is being processed.
+          print " -> #{linter.spec_name}\r" unless config.silent?
+          $stdout.flush
+          linter.lint
+
+          case linter.result_type
+          when :error
+            invalid_count += 1
+            color = :red
+          when :warning
+            invalid_count  += 1 unless @only_errors
+            color = :yellow
+          else
+            color = :green
+          end
+
+          # This overwrites the previously printed text
+          puts " -> ".send(color) << linter.spec_name unless config.silent?
+          print_messages('ERROR', linter.errors)
+          print_messages('WARN',  linter.warnings)
+          print_messages('NOTE',  linter.notes)
+
+          puts unless config.silent?
+        end
+
+        puts "Analyzed #{podspecs_to_lint.count} podspecs files.\n\n" unless config.silent?
+        count = podspecs_to_lint.count
         if invalid_count == 0
           lint_passed_message = count == 1 ? "#{podspecs_to_lint.first.basename} passed validation." : "All the specs passed validation."
           puts lint_passed_message.green << "\n\n" unless config.silent?
         else
           raise Informative, count == 1 ? "The spec did not pass validation." : "#{invalid_count} out of #{count} specs failed validation."
         end
+        podspecs_tmp_dir.rmtree if podspecs_tmp_dir.exist?
       end
 
       private
 
-      def lint_podspecs
-        invalid_count = 0
-        specs_to_lint.each do |spec|
-          # Show immediatly which pod is being processed.
-          print " -> #{spec}\r" unless config.silent? || @multiple_files
-          $stdout.flush
-
-          linter          = Linter.new(spec)
-          linter.lenient  = @only_errors
-          linter.quick    = @quick || @multiple_files
-          linter.no_clean = @no_clean
-          invalid_count  += 1 unless linter.lint
-
-          # This overwrites the previously printed text
-          puts " -> ".send(lint_result_color(linter)) << spec.to_s unless config.silent? || should_skip?(linter)
-          print_messages(spec, 'ERROR', linter.errors)
-          print_messages(spec, 'WARN',  linter.warnings)
-          print_messages(spec, 'NOTE',  linter.notes)
-
-          puts unless config.silent? || should_skip?(linter)
-        end
-        puts "Analyzed #{specs_to_lint.count} specs in #{podspecs_to_lint.count} podspecs files.\n\n" if @multiple_files && !config.silent?
-        invalid_count
-      end
-
-      def lint_result_color(linter)
-        if linter.errors.empty? && linter.warnings.empty?
-          :green
-        elsif linter.errors.empty?
-          :yellow
-        else
-          :red
-        end
-      end
-
-      def should_skip?(linter)
-        @multiple_files && linter.errors.empty? && linter.warnings.empty? && linter.notes.empty?
-      end
-
-      def print_messages(spec, type, messages)
+      def print_messages(type, messages)
         return if config.silent?
         messages.each {|msg| puts "    - #{type.ljust(5)} | #{msg}"}
       end
 
       def podspecs_to_lint
         @podspecs_to_lint ||= begin
-          path = Pathname.new(@repo_or_podspec || '.')
-          if path.directory?
-            files = path.glob('**/*.podspec')
-            raise Informative, "No specs found in the current directory." if files.empty?
-            @multiple_files = true
-          else
-            files = [path]
-            raise Informative, "Unable to find a spec named `#{@repo_or_podspec}'." unless files[0].exist? && @repo_or_podspec.include?('.podspec')
+          files = []
+          @podspecs_paths << '.' if @podspecs_paths.empty?
+          @podspecs_paths.each do |path|
+            if path =~ /https?:\/\//
+              require 'open-uri'
+              output_path = podspecs_tmp_dir + File.basename(path)
+              output_path.dirname.mkpath
+              open(path) do |io|
+                output_path.open('w') { |f| f << io.read }
+              end
+              files << output_path
+            else if (pathname = Pathname.new(path)).directory?
+              files += pathname.glob('**/*.podspec')
+              raise Informative, "No specs found in the current directory." if files.empty?
+            else
+              files << (pathname = Pathname.new(path))
+              raise Informative, "Unable to find a spec named `#{path}'." unless pathname.exist? && path.include?('.podspec')
+            end
           end
+        end
           files
         end
       end
 
-      def specs_to_lint
-        @specs_to_lint ||= begin
-          podspecs_to_lint.map do |podspec|
-            root_spec = Specification.from_file(podspec)
-            # TODO find a way to lint subspecs
-            # root_spec.preferred_dependency ? root_spec.subspec_dependencies : root_spec
-          end.flatten
-        end
-      end
-
-      # Linter class
-      #
-      class Linter
-        include Config::Mixin
-
-        # TODO: Add check to ensure that attributes inherited by subspecs are not duplicated ?
-
-        attr_accessor :quick, :lenient, :no_clean
-        attr_reader   :spec, :file
-        attr_reader   :errors, :warnings, :notes
-
-        def initialize(spec)
-          @spec = spec
-          @file = spec.defined_in_file.realpath
-        end
-
-        # Takes an array of podspec files and lints them all
-        #
-        # It returns true if the spec passed validation
-        #
-        def lint
-          @platform_errors, @platform_warnings, @platform_notes = {}, {}, {}
-
-          platforms = @spec.available_platforms
-          platforms.each do |platform|
-            @platform_errors[platform], @platform_warnings[platform], @platform_notes[platform] = [], [], []
-
-            @spec.activate_platform(platform)
-            @platform = platform
-            puts "\n\n#{spec} - Analyzing on #{platform} platform.".green.reversed if config.verbose? && !@quick
-
-            # Skip validation if there are errors in the podspec as it would result in a crash
-            if !podspec_errors.empty?
-              @platform_errors[platform]   += podspec_errors
-              @platform_notes[platform]    << "#{platform.name} [!] Fatal errors found skipping the rest of the validation"
-            else
-              @platform_warnings[platform] += podspec_warnings + deprecation_warnings
-              @platform_notes[platform]    += podspec_notes
-              peform_extensive_analysis unless quick
-            end
-          end
-
-          # Get common messages
-          @errors   = @platform_errors.values.reduce(:&)   || []
-          @warnings = @platform_warnings.values.reduce(:&) || []
-          @notes    = @platform_notes.values.reduce(:&)    || []
-
-          platforms.each do |platform|
-            # Mark platform specific messages
-            @errors   += (@platform_errors[platform] - @errors).map {|m| "[#{platform}] #{m}"}
-            @warnings += (@platform_warnings[platform] - @warnings).map {|m| "[#{platform}] #{m}"}
-            @notes    += (@platform_notes[platform] - @notes).map {|m| "[#{platform}] #{m}"}
-          end
-
-          valid?
-        end
-
-        def valid?
-          lenient ? errors.empty? : ( errors.empty? && warnings.empty? )
-        end
-
-        # Performs platform specific analysis.
-        # It requires to download the source at each iteration
-        #
-        def peform_extensive_analysis
-          set_up_lint_environment
-          install_pod
-          puts "Building with xcodebuild.\n".yellow if config.verbose?
-          # treat xcodebuild warnings as notes because the spec maintainer might not be the author of the library
-          xcodebuild_output.each { |msg| ( msg.include?('error') ? @platform_errors[@platform] : @platform_notes[@platform] ) << msg }
-          @platform_errors[@platform]   += file_patterns_errors
-          @platform_warnings[@platform] += file_patterns_warnings
-          tear_down_lint_environment
-        end
-
-        def install_pod
-          podfile = podfile_from_spec
-          config.verbose
-          installer = Installer.new(podfile)
-          installer.install!
-          @pod = installer.pods.find { |pod| pod.top_specification == @spec }
-          config.silent
-        end
-
-        def podfile_from_spec
-          name     = spec.name
-          podspec  = file.realpath.to_s
-          platform = @platform
-          podfile  = Pod::Podfile.new do
-            platform(platform)
-            dependency name, :podspec => podspec
-          end
-          podfile
-        end
-
-        def set_up_lint_environment
-          tmp_dir.rmtree if tmp_dir.exist?
-          tmp_dir.mkpath
-          @original_config = Config.instance.clone
-          config.project_root      = tmp_dir
-          config.project_pods_root = tmp_dir + 'Pods'
-          config.silent            = !config.verbose
-          config.integrate_targets = false
-          config.generate_docs     = false
-        end
-
-        def tear_down_lint_environment
-          tmp_dir.rmtree unless no_clean
-          Config.instance = @original_config
-        end
-
-        def tmp_dir
-          Pathname.new('/tmp/CocoaPods/Lint')
-        end
-
-        def pod_dir
-          tmp_dir + 'Pods' + spec.name
-        end
-
-        # @return [Array<String>] List of the fatal defects detected in a podspec
-        def podspec_errors
-          messages = []
-          messages << "The name of the spec should match the name of the file" unless names_match?
-          messages << "Unrecognized platfrom" unless platform_valid?
-          messages << "Missing name"          unless spec.name
-          messages << "Missing version"       unless spec.version
-          messages << "Missing summary"       unless spec.summary
-          messages << "Missing homepage"      unless spec.homepage
-          messages << "Missing author(s)"     unless spec.authors
-          messages << "Missing source"        unless spec.source
-
-          # attributes with multiplatform values
-          return messages unless platform_valid?
-          messages << "Missing source_files" if spec.source_files.empty? && spec.subspecs.empty? && spec.resources.empty?
-          messages += paths_starting_with_a_slash_errors
-          messages
-        end
-
-        def names_match?
-          return true unless spec.name
-          root_name = spec.name.match(/[^\/]*/)[0]
-          file.basename.to_s == root_name + '.podspec'
-        end
-
-        def platform_valid?
-          !spec.platform || [:ios, :osx].include?(spec.platform.name)
-        end
-
-        def paths_starting_with_a_slash_errors
-          messages = []
-          %w[source_files resources clean_paths].each do |accessor|
-            patterns = spec.send(accessor.to_sym)
-            # Some values are multiplaform
-            patterns = patterns.is_a?(Hash) ? patterns.values.flatten(1) : patterns
-            patterns.each do |pattern|
-              # Skip FileList that would otherwise be resolved from the working directory resulting
-              # in a potentially very expensi operation
-              next if pattern.is_a?(FileList)
-              invalid = pattern.is_a?(Array) ? pattern.any? { |path| path.start_with?('/') } : pattern.start_with?('/')
-              if invalid
-                messages << "Paths cannot start with a slash (#{accessor})"
-                break
-              end
-            end
-          end
-          messages
-        end
-
-        # @return [Array<String>] List of the **non** fatal defects detected in a podspec
-        def podspec_warnings
-          license  = @spec.license || {}
-          source   = @spec.source  || {}
-          text     = @file.read
-          messages = []
-          messages << "Missing license type"                                unless license[:type]
-          messages << "Sample license type"                                 if license[:type] && license[:type] =~ /\(example\)/
-          messages << "The summary is not meaningful"                       if spec.summary =~ /A short description of/
-          messages << "The description is not meaningful"                   if spec.description && spec.description =~ /An optional longer description of/
-          messages << "The summary should end with a dot"                   if @spec.summary !~ /.*\./
-          messages << "The description should end with a dot"               if @spec.description !~ /.*\./ && @spec.description != @spec.summary
-          messages << "Git sources should specify either a tag or a commit" if source[:git] && !source[:commit] && !source[:tag]
-          messages << "Github repositories should end in `.git'"            if github_source? && source[:git] !~ /.*\.git/
-          messages << "Github repositories should use `https' link"         if github_source? && source[:git] !~ /https:\/\/github.com/
-          messages << "Comments must be deleted"                            if text =~ /^\w*#\n\w*#/ # allow a single line comment as it is generally used in subspecs
-          messages
-        end
-
-        def github_source?
-          @spec.source && @spec.source[:git] =~ /github.com/
-        end
-
-        # @return [Array<String>] List of the comments detected in the podspec
-        def podspec_notes
-          text = @file.read
-          deprecations = []
-          deprecations << "The `post_install' hook is reserved for edge cases"          if text. =~ /post_install/
-          deprecations
-        end
-
-        # It reads a podspec file and checks for strings corresponding
-        # to features that are or will be deprecated
-        #
-        # @return [Array<String>]
-        #
-        def deprecation_warnings
-          text = @file.read
-          deprecations = []
-          deprecations << "`config.ios?' and `config.osx?' are deprecated"              if text. =~ /config\..?os.?/
-          deprecations << "clean_paths are deprecated and ignored (use preserve_paths)" if text. =~ /clean_paths/
-          deprecations
-        end
-
-        # It creates a podfile in memory and builds a library containing
-        # the pod for all available platfroms with xcodebuild.
-        #
-        # @return [Array<String>]
-        #
-        def xcodebuild_output
-          return [] if `which xcodebuild`.strip.empty?
-          messages      = []
-          output        = Dir.chdir(config.project_pods_root) { `xcodebuild clean build 2>&1` }
-          clean_output  = process_xcode_build_output(output)
-          messages     += clean_output
-          puts(output) if config.verbose?
-          messages
-        end
-
-        def process_xcode_build_output(output)
-          output_by_line = output.split("\n")
-          selected_lines = output_by_line.select do |l|
-            l.include?('error:') && (l !~ /errors? generated\./) \
-              || l.include?('warning:') && (l !~ /warnings? generated\./)\
-              || l.include?('note:')
-          end
-          selected_lines.map do |l|
-            new = l.gsub(/\/tmp\/CocoaPods\/Lint\/Pods\//,'') # Remove the unnecessary tmp path
-            new.gsub!(/^ */,' ')                              # Remove indentation
-            "XCODEBUILD > " << new                            # Mark
-          end
-        end
-
-        # It checks that every file pattern specified in a spec yields
-        # at least one file. It requires the pods to be alredy present
-        # in the current working directory under Pods/spec.name.
-        #
-        # @return [Array<String>]
-        #
-        def file_patterns_errors
-          messages = []
-          messages << "The sources did not match any file"                     if !@spec.source_files.empty? && @pod.source_files.empty?
-          messages << "The resources did not match any file"                   if !@spec.resources.empty? && @pod.resource_files.empty?
-          messages << "The preserve_paths did not match any file"              if !@spec.preserve_paths.empty? && @pod.preserve_paths.empty?
-          messages << "The exclude_header_search_paths did not match any file" if !@spec.exclude_header_search_paths.empty? && @pod.headers_excluded_from_search_paths.empty?
-          messages
-        end
-
-        def file_patterns_warnings
-          messages = []
-          messages << "Unable to find a license file" unless @pod.license_file
-          messages
-        end
+      def podspecs_tmp_dir
+         Pathname.new('/tmp/CocoaPods/Lint_podspec')
       end
 
       # Templates and github information retrival for spec create
@@ -483,15 +216,32 @@ Pod::Spec.new do |s|
   s.name         = "#{data[:name]}"
   s.version      = "#{data[:version]}"
   s.summary      = "#{data[:summary]}"
-  # s.description  = 'An optional longer description of #{data[:name]}.'
+  # s.description  = <<-DESC
+  #                   An optional longer description of #{data[:name]}
+  #
+  #                   * Markdonw format.
+  #                   * Don't worry about the indent, we strip it!
+  #                  DESC
   s.homepage     = "#{data[:homepage]}"
 
   # Specify the license type. CocoaPods detects automatically the license file if it is named
-  # `LICENSE*', however if the name is different, specify it.
+  # `LICENSE*.*', however if the name is different, specify it.
+  s.license      = 'MIT (example)'
+  # s.license      = { :type => 'MIT (example)', :file => 'FILE_LICENSE' }
+  #
   # Only if no dedicated file is available include the full text of the license.
   #
-  s.license      = 'MIT (example)'
-  # s.license      = { :type => 'MIT', :file => 'LICENSE', :text => 'Permission is hereby granted ...' }
+  # s.license      = {
+  #   :type => 'MIT (example)',
+  #   :text => <<-LICENSE
+  #             Copyright (C) <year> <copyright holders>
+
+  #             All rights reserved.
+
+  #             Redistribution and use in source and binary forms, with or without
+  #             ...
+  #   LICENSE
+  # }
 
   # Specify the authors of the library, with email addresses. You can often find
   # the email addresses of the authors by using the SCM log. E.g. $ git log
@@ -533,6 +283,17 @@ Pod::Spec.new do |s|
   #
   s.source_files = 'Classes', 'Classes/**/*.{h,m}'
 
+  # A list of file patterns which select the header files that should be
+  # made available to the application. If the pattern is a directory then the
+  # path will automatically have '*.h' appended.
+  #
+  # Also allows the use of the FileList class like `source_files does.
+  #
+  # If you do not explicitely set the list of public header files,
+  # all headers of source_files will be made public.
+  #
+  # s.public_header_files = 'Classes/**/*.h'
+
   # A list of resources included with the Pod. These are copied into the
   # target bundle with a build phase script.
   #
@@ -543,9 +304,10 @@ Pod::Spec.new do |s|
 
   # A list of paths to preserve after installing the Pod.
   # CocoaPods cleans by default any file that is not used.
+  # Please don't include documentation, example, and test files.
   # Also allows the use of the FileList class like `source_files does.
   #
-  # s.preserve_paths = "examples", "doc"
+  # s.preserve_paths = "FilesToSave", "MoreFilesToSave"
 
   # Specify a list of frameworks that the application needs to link
   # against for this Pod to work.

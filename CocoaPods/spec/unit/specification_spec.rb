@@ -79,6 +79,13 @@ describe "A Pod::Specification loaded from a podspec" do
                          '-framework SystemConfiguration' }
   end
 
+  it "has a shortcut to add weak frameworks to the xcconfig" do
+    @spec.weak_frameworks = 'Twitter'
+    @spec.activate_platform(:ios).xcconfig.should == {
+      "OTHER_LDFLAGS"=>"-framework SystemConfiguration -weak_framework Twitter"
+    }
+  end
+
   it "has a shortcut to add libraries to the xcconfig" do
     @spec.libraries = 'z', 'xml2'
     @spec.activate_platform(:ios).xcconfig.should == {
@@ -293,10 +300,12 @@ describe "A Pod::Specification subspec" do
         fss.ios.source_files  = 'subspec_ios.m'
         fss.osx.source_files  = 'subspec_osx.m'
         fss.framework         = 'CoreGraphics'
+        fss.weak_framework    = 'Twitter'
         fss.library           = 'z'
 
         fss.subspec 'SecondSubSpec' do |sss|
           sss.source_files = 'subsubspec.m'
+          sss.requires_arc = false
         end
       end
     end
@@ -321,7 +330,7 @@ describe "A Pod::Specification subspec" do
 
   it "automatically forwards top level attributes to the top level parent" do
     @spec.activate_platform(:ios)
-    [:version, :license, :authors, :requires_arc, :compiler_flags].each do |attr|
+    [:version, :license, :authors, :compiler_flags].each do |attr|
       @spec.subspecs.first.send(attr).should == @spec.send(attr)
       @spec.subspecs.first.subspecs.first.send(attr).should == @spec.send(attr)
     end
@@ -336,6 +345,13 @@ describe "A Pod::Specification subspec" do
 
     @subsubspec.compiler_flags = '-Wdeprecated-implementations'
     @subsubspec.compiler_flags.should == ' -fobjc-arc -Wdeprecated-implementations'
+  end
+
+  it "allows to specify arc settings for subspecs" do
+    @spec.activate_platform(:ios)
+    @spec.requires_arc.should == true
+    @subspec.requires_arc.should == true
+    @subsubspec.requires_arc.should == false
   end
 
   it "returns empty arrays for chained attributes with no value in the chain" do
@@ -428,18 +444,24 @@ describe "A Pod::Specification subspec" do
     @subsubspec.frameworks.should == %w[ CoreData CoreGraphics ]
   end
 
+  it "resolves the weak frameworks correctly" do
+    @spec.activate_platform(:ios)
+    @spec.weak_frameworks.should       == %w[  ]
+    @subspec.weak_frameworks.should    == %w[ Twitter ]
+  end
+
   it "resolves the xcconfig" do
     @spec.activate_platform(:ios)
     @spec.xcconfig = { 'OTHER_LDFLAGS' => "-Wl,-no_compact_unwind" }
 
     @spec.xcconfig.should       == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -framework CoreData"}
-    @subspec.xcconfig.should    == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -lz -framework CoreData -framework CoreGraphics"}
-    @subsubspec.xcconfig.should == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -lz -framework CoreData -framework CoreGraphics"}
+    @subspec.xcconfig.should    == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -lz -framework CoreData -framework CoreGraphics -weak_framework Twitter"}
+    @subsubspec.xcconfig.should == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -lz -framework CoreData -framework CoreGraphics -weak_framework Twitter"}
 
     @subsubspec.xcconfig = { 'HEADER_SEARCH_PATHS' => '$(SDKROOT)/usr/include/libxml2' }
 
     @spec.xcconfig.should       == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -framework CoreData"}
-    @subsubspec.xcconfig.should == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -lz -framework CoreData -framework CoreGraphics", "HEADER_SEARCH_PATHS"=>"$(SDKROOT)/usr/include/libxml2"}
+    @subsubspec.xcconfig.should == {"OTHER_LDFLAGS"=>"-Wl,-no_compact_unwind -lxml -lz -framework CoreData -framework CoreGraphics -weak_framework Twitter", "HEADER_SEARCH_PATHS"=>"$(SDKROOT)/usr/include/libxml2"}
   end
 end
 

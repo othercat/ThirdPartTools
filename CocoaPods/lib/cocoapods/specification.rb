@@ -1,4 +1,5 @@
 require 'xcodeproj/config'
+require 'active_support/core_ext/string/strip.rb'
 
 module Pod
   extend Config::Mixin
@@ -39,17 +40,20 @@ module Pod
 
       # multi-platform attributes
       %w[ source_files
+          public_header_files
           resources
           preserve_paths
           exclude_header_search_paths
           frameworks
+          weak_frameworks
           libraries
           dependencies
           compiler_flags ].each do |attr|
         instance_variable_set( "@#{attr}", { :ios => [], :osx => [] } )
       end
-      @xcconfig = { :ios => Xcodeproj::Config.new, :osx => Xcodeproj::Config.new }
-      @header_dir = { :ios => nil, :osx => nil }
+      @xcconfig     = { :ios => Xcodeproj::Config.new, :osx => Xcodeproj::Config.new }
+      @header_dir   = { :ios => nil, :osx => nil }
+      @requires_arc = { :ios => nil, :osx => nil }
 
       yield self if block_given?
     end
@@ -119,6 +123,7 @@ module Pod
       end
 
       %w{ source_files=
+          public_header_files=
           resource=
           resources=
           preserve_paths=
@@ -126,11 +131,14 @@ module Pod
           xcconfig=
           framework=
           frameworks=
+          weak_framework=
+          weak_frameworks=
           library=
           libraries=
           compiler_flags=
           deployment_target=
           header_dir=
+          requires_arc
           dependency }.each do |method|
         define_method(method) do |args|
           @specification._on_platform(@platform) do
@@ -188,24 +196,41 @@ module Pod
     top_attr_accessor :homepage
     top_attr_accessor :summary
     top_attr_accessor :documentation
-    top_attr_accessor :requires_arc
-    top_attr_accessor :license,             lambda { |l| ( l.kind_of? String ) ? { :type => l } : l }
     top_attr_accessor :version,             lambda { |v| Version.new(v) }
-    top_attr_accessor :authors,             lambda { |a| parse_authors(a) }
 
-    top_attr_reader   :description,         lambda {|instance, ivar| ivar || instance.summary }
-    top_attr_writer   :description
+    top_attr_reader   :description,         lambda { |instance, ivar| ivar || instance.summary }
+    top_attr_writer   :description,         lambda { |d| d.strip_heredoc }
 
-    alias_method      :author=, :authors=
+    # @!method license
+    #
+    # @abstract
+    #   The license of the pod.
+    #
+    # @example
+    #   s.license = 'MIT'
+    #   s.license = { :type => 'MIT', :file => 'license.txt', :text => 'Permission is granted to...' }
+    #
+    top_attr_accessor :license, lambda { |license|
+      license = ( license.kind_of? String ) ? { :type => license } : license
+      license[:text] = license[:text].strip_heredoc if license[:text]
+      license
+    }
 
-    def self.parse_authors(*names_and_email_addresses)
+    # @!method authors
+    #
+    # @abstract
+    #   The list of the authors (with email) of the pod.
+    #
+    top_attr_accessor :authors, lambda { |*names_and_email_addresses|
       list = names_and_email_addresses.flatten
       unless list.first.is_a?(Hash)
         authors = list.last.is_a?(Hash) ? list.pop : {}
         list.each { |name| authors[name] = nil }
       end
       authors || list.first
-    end
+    }
+
+    alias_method :author=, :authors=
 
     ### Attributes **with** multiple platform support
 
@@ -217,16 +242,37 @@ module Pod
 
 
     pltf_chained_attr_accessor  :source_files,                lambda {|value, current| pattern_list(value) }
+    pltf_chained_attr_accessor  :public_header_files,         lambda {|value, current| pattern_list(value) }
     pltf_chained_attr_accessor  :resources,                   lambda {|value, current| pattern_list(value) }
     pltf_chained_attr_accessor  :preserve_paths,              lambda {|value, current| pattern_list(value) } # Paths that should not be cleaned
     pltf_chained_attr_accessor  :exclude_header_search_paths, lambda {|value, current| pattern_list(value) } # Headers to be excluded from being added to search paths (RestKit)
     pltf_chained_attr_accessor  :frameworks,                  lambda {|value, current| (current << value).flatten }
+    pltf_chained_attr_accessor  :weak_frameworks,             lambda {|value, current| (current << value).flatten }
     pltf_chained_attr_accessor  :libraries,                   lambda {|value, current| (current << value).flatten }
 
-    alias_method :resource=,      :resources=
-    alias_method :preserve_path=, :preserve_paths=
-    alias_method :framework=,     :frameworks=
-    alias_method :library=,       :libraries=
+    alias_method :resource=,        :resources=
+    alias_method :preserve_path=,   :preserve_paths=
+    alias_method :framework=,       :frameworks=
+    alias_method :weak_framework=,  :weak_frameworks=
+    alias_method :library=,         :libraries=
+
+
+    # @!method requires_arc=
+    #
+    # @abstract Wether the `-fobjc-arc' flag should be added to the compiler
+    #   flags.
+    #
+    # @param [Bool] Wether the source files require ARC.
+    #
+    platform_attr_writer :requires_arc
+
+    def requires_arc
+      requires_arc = @requires_arc[active_platform]
+      if requires_arc.nil?
+        requires_arc = @parent ? @parent.requires_arc : false
+      end
+      requires_arc
+    end
 
     # @!method header_dir=
     #
@@ -252,9 +298,11 @@ module Pod
     platform_attr_writer :xcconfig, lambda {|value, current| current.tap { |c| c.merge!(value) } }
 
     def xcconfig
-      raw_xconfig.dup.
-        tap { |x| x.libraries.merge  libraries }.
-        tap { |x| x.frameworks.merge frameworks }
+      result = raw_xconfig.dup
+      result.libraries.merge(libraries)
+      result.frameworks.merge(frameworks)
+      result.weak_frameworks.merge(weak_frameworks)
+      result
     end
 
     def raw_xconfig
@@ -324,15 +372,14 @@ module Pod
     attr_reader :subspecs
 
     def recursive_subspecs
-      unless @recursive_subspecs
+      @recursive_subspecs ||= begin
         mapper = lambda do |spec|
-            spec.subspecs.map do |subspec|
-              [subspec, *mapper.call(subspec)]
-            end.flatten
-          end
-          @recursive_subspecs = mapper.call self
+          spec.subspecs.map do |subspec|
+            [subspec, *mapper.call(subspec)]
+          end.flatten
+        end
+        mapper.call(self)
       end
-      @recursive_subspecs
     end
 
     def subspec_by_name(name)

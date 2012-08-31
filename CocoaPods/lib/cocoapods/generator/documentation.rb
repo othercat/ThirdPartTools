@@ -1,4 +1,5 @@
 require 'escape'
+require 'active_support/core_ext/array/conversions'
 
 module Pod
   module Generator
@@ -23,7 +24,7 @@ module Pod
 
       def company
         if @specification.authors
-          @specification.authors.keys.sort.join(', ')
+          @specification.authors.keys.sort.to_sentence
         else
           'no-company'
         end
@@ -42,7 +43,7 @@ module Pod
       end
 
       def files
-        @pod.all_specs_public_header_files.map{ |f| f.relative_path_from(@pod.root).to_s }
+        @pod.documentation_headers.map{ |f| f.relative_path_from(@pod.root).to_s }
       end
 
       def index_file

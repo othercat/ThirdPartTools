@@ -5,6 +5,7 @@ module Pod
     autoload :ErrorReport, 'cocoapods/command/error_report'
     autoload :Install,     'cocoapods/command/install'
     autoload :List,        'cocoapods/command/list'
+    autoload :Linter,      'cocoapods/command/linter'
     autoload :Presenter,   'cocoapods/command/presenter'
     autoload :Push,        'cocoapods/command/push'
     autoload :Repo,        'cocoapods/command/repo'
@@ -86,7 +87,10 @@ module Pod
 
     def self.parse(*argv)
       argv = ARGV.new(argv)
-      raise PlainInformative, VERSION if argv.option('--version')
+      if argv.option('--version')
+        puts VERSION
+        exit!(0)
+      end
 
       show_help = argv.option('--help')
       Config.instance.silent = argv.option('--silent')

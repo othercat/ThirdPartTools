@@ -1,9 +1,11 @@
 require 'xcodeproj/workspace'
 require 'xcodeproj/project'
 
+require 'active_support/core_ext/string/inflections'
+require 'active_support/core_ext/array/conversions'
+
 module Pod
   class Installer
-
     class UserProjectIntegrator
       include Pod::Config::Mixin
 
@@ -55,6 +57,8 @@ module Pod
       end
 
       class TargetIntegrator
+        include Pod::Config::Mixin
+
         attr_reader :target_definition
 
         def initialize(target_definition)
@@ -69,10 +73,8 @@ module Pod
           return if targets.empty?
 
           unless Config.instance.silent?
-            # TODO let's just use ActiveSupport.
-            plural = targets.size > 1
-            puts "-> Integrating `#{@target_definition.lib_name}' into target#{'s' if plural} " \
-                 "`#{targets.map(&:name).join(', ')}' of Xcode project `#{user_project_path.basename}'.".green
+            puts "-> Integrating `#{@target_definition.lib_name}' into #{'target'.pluralize(targets.size)} " \
+                 "`#{targets.map(&:name).to_sentence}' of Xcode project `#{user_project_path.basename}'.".green
           end
 
           add_xcconfig_base_configuration
@@ -134,14 +136,36 @@ module Pod
         def add_xcconfig_base_configuration
           xcconfig = user_project.files.new('path' => @target_definition.xcconfig_relative_path)
           targets.each do |target|
+            config_build_names_by_overriden_key = {}
             target.build_configurations.each do |config|
+              config_name = config.attributes["name"]
+              if @target_definition.xcconfig
+                @target_definition.xcconfig.attributes.each do |key, value|
+                  target_value = config.build_settings[key]
+                  if target_value && !target_value.include?('$(inherited)')
+                    config_build_names_by_overriden_key[key] ||= []
+                    config_build_names_by_overriden_key[key] << config_name
+                  end
+                end
+              end
+
               config.base_configuration = xcconfig
+            end
+
+            unless config.silent?
+              config_build_names_by_overriden_key.each do |key, config_build_names|
+                name = "#{target.attributes["name"]} [#{config_build_names.join(' - ')}]"
+                puts "\n[!] The target `#{name}' overrides the `#{key}' build setting defined in `#{@target_definition.xcconfig_relative_path}'.".yellow
+                puts "    - Use the `$(inherited)' flag, or"
+                puts "    - Remove the build settings from the target."
+              end
             end
           end
         end
 
         def add_pods_library
-          pods_library = user_project.group("Frameworks").files.new_static_library(@target_definition.label)
+          group = user_project.group("Frameworks") || user_project.main_group
+          pods_library = group.files.new_static_library(@target_definition.label)
           targets.each do |target|
             target.frameworks_build_phases.each { |build_phase| build_phase << pods_library }
           end

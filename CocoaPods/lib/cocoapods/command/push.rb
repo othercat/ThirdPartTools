@@ -6,15 +6,17 @@ module Pod
       def self.banner
         %{Pushing new specifications to a spec-repo:
 
-  $ pod push [REPO]
+  $ pod push REPO [NAME.podspec]
 
-    Validates `*.podspec' in the current working dir, updates
-    the local copy of the repository named REPO, adds specifications
-    to REPO, and finally it pushes REPO to its remote.}
+    Validates NAME.podspec or `*.podspec' in the current working dir, creates
+    a directory and version folder for the pod in the local copy of 
+    REPO (~/.cocoapods/[REPO]), copies the podspec file into the version directory,
+    and finally it pushes REPO to its remote.}
       end
 
       def self.options
-        [["--allow-warnings", "Allows to push if warnings are not evitable"]].concat(super)
+        [ ["--allow-warnings", "Allows to push if warnings are not evitable"],
+          ["--local-only", "Does not perform the step of pushing REPO to its remote"] ].concat(super)
       end
 
       extend Executable
@@ -22,7 +24,9 @@ module Pod
 
       def initialize(argv)
         @allow_warnings = argv.option('--allow-warnings')
+        @local_only = argv.option('--local-only')
         @repo = argv.shift_argument
+        @podspec = argv.shift_argument
         super unless argv.empty? && @repo
       end
 
@@ -31,7 +35,7 @@ module Pod
         check_repo_status
         update_repo
         add_specs_to_repo
-        push_repo
+        push_repo unless @local_only
         puts
       end
 
@@ -61,7 +65,7 @@ module Pod
       end
 
       def podspec_files
-        files = Pathname.glob("*.podspec")
+        files = Pathname.glob(@podspec || "*.podspec")
         raise Informative, "[!] Couldn't find .podspec file in current directory".red if files.empty?
         files
       end
@@ -71,8 +75,10 @@ module Pod
         lint_argv = ["lint"]
         lint_argv << "--only-errors" if @allow_warnings
         lint_argv << "--silent" if config.silent
-        lint_argv += podspec_files.map(&:to_s)
-        all_valid = Spec.new(ARGV.new(lint_argv)).run
+        all_valid = true
+        podspec_files.each do |podspec|
+          Spec.new(ARGV.new(lint_argv + [podspec.to_s])).run
+        end
       end
 
       def add_specs_to_repo

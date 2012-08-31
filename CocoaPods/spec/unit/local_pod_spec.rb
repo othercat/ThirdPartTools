@@ -11,7 +11,7 @@ describe Pod::LocalPod do
       copy_fixture_to_pod('banana-lib', @pod)
     end
 
-    it 'returns the Pod root directory path' do
+    it "returns the Pod root directory path" do
       @pod.root.should == @sandbox.root + 'BananaLib'
     end
 
@@ -25,20 +25,20 @@ describe Pod::LocalPod do
       Pathname(@pod.root + "foo").should.exist
     end
 
-    it 'can delete itself' do
+    it "can delete itself" do
       @pod.create
       @pod.implode
       @pod.root.should.not.exist
     end
 
-    it 'returns an expanded list of source files, relative to the sandbox root' do
+    it "returns an expanded list of source files, relative to the sandbox root" do
       @pod.relative_source_files.sort.should == [
         Pathname.new("BananaLib/Classes/Banana.m"),
         Pathname.new("BananaLib/Classes/Banana.h")
       ].sort
     end
 
-    it 'returns the source files groupped by specification' do
+    it "returns the source files groupped by specification" do
       files = @pod.source_files_by_spec[@pod.specifications.first].sort
       files.should == [
         @pod.root + "Classes/Banana.m",
@@ -46,30 +46,38 @@ describe Pod::LocalPod do
       ].sort
     end
 
-    it 'returns a list of header files' do
+    it "returns a list of header files" do
       @pod.relative_header_files.should == [Pathname.new("BananaLib/Classes/Banana.h")]
     end
 
-    it 'returns a list of header files by specification' do
+    it "returns a list of header files by specification" do
       files = @pod.header_files_by_spec[@pod.specifications.first].sort
       files.should == [ @pod.root + "Classes/Banana.h" ]
     end
 
-    it 'returns an expanded list the files to clean' do
+    it "returns an expanded list the files to clean" do
       clean_paths = @pod.clean_paths.map { |p| p.to_s.gsub(/.*Pods\/BananaLib/,'') }
       clean_paths.should.include "/.git/config"
-      # There are some hidden files on Travis
-      clean_files_without_hidden = clean_paths.reject { |p| p.to_s.include?('/.') }
+      # * There are some hidden files on Travis
+      # * The submodule of the repo (libPusher) can be ignore, to reduce noise of this test
+      clean_files_without_hidden = clean_paths.reject { |p| p.to_s.include?('/.') || p.to_s.include?('libPusher') }
       clean_files_without_hidden.should == %W[ /sub-dir /sub-dir/sub-dir-2 /sub-dir/sub-dir-2/somefile.txt ]
     end
 
-    it 'returns an expanded list of resources, relative to the sandbox root' do
+    it "returns an expanded list of resources, relative to the sandbox root" do
       @pod.relative_resource_files.should == [Pathname.new("BananaLib/Resources/logo-sidebar.png")]
     end
 
     it "can link it's headers into the sandbox" do
       @pod.link_headers
-      expected_header_path = @sandbox.headers_root + "BananaLib/Banana.h"
+      expected_header_path = @sandbox.build_headers.root + "BananaLib/Banana.h"
+      expected_header_path.should.be.symlink
+      File.read(expected_header_path).should == (@sandbox.root + @pod.header_files[0]).read
+    end
+
+    it "can link it's public headers into the sandbox" do
+      @pod.link_headers
+      expected_header_path = @sandbox.public_headers.root + "BananaLib/Banana.h"
       expected_header_path.should.be.symlink
       File.read(expected_header_path).should == (@sandbox.root + @pod.header_files[0]).read
     end
@@ -225,7 +233,6 @@ describe Pod::LocalPod do
       assert_array_equals(expected, computed)
     end
 
-
     it "resolved the header files" do
       expected = %w[
         Chameleon/UIKit/Classes/UIKit.h
@@ -237,12 +244,19 @@ describe Pod::LocalPod do
       assert_array_equals(expected, computed)
     end
 
-    it "resolves the header files of **every** subspec" do
-      computed = @pod.all_specs_public_header_files.map { |p| p.relative_path_from(@pod.root).to_s }
+    it "resolves the documentation header files including not activated subspecs" do
+      subspecs = fixture_spec('chameleon/Chameleon.podspec').subspecs
+      spec = subspecs[0]
+      spec.stubs(:public_header_files).returns("UIKit/Classes/*Kit.h")
+      @pod = Pod::LocalPod.new(spec, @sandbox, Pod::Platform.new(:osx))
+      # Note we only activated UIKit but all the specs need to be resolved
+      computed = @pod.documentation_headers.map { |p| p.relative_path_from(@pod.root).to_s }
+
+      # The Following headers are private:
+      # UIKit/Classes/UIView.h
+      # UIKit/Classes/UIWindow.h
       expected = %w[
         UIKit/Classes/UIKit.h
-        UIKit/Classes/UIView.h
-        UIKit/Classes/UIWindow.h
         StoreKit/Classes/SKPayment.h
         StoreKit/Classes/StoreKit.h
         MessageUI/Classes/MessageUI.h
@@ -271,7 +285,7 @@ describe Pod::LocalPod do
     end
 
     it "returns a hash of mappings with a custom header dir prefix" do
-      mappings = @pod.send(:header_mappings)
+      mappings = @pod.send(:header_mappings, @pod.header_files_by_spec)
       mappings = mappings.map do |folder, headers|
         "#{folder} > #{headers.sort.map{ |p| p.relative_path_from(@pod.root).to_s }.join(' ')}"
       end
@@ -282,7 +296,7 @@ describe Pod::LocalPod do
 
     it "respects the headers excluded from the search paths" do
       @pod.stubs(:headers_excluded_from_search_paths).returns([@pod.root + 'UIKit/Classes/UIKit.h'])
-      mappings = @pod.send(:header_mappings)
+      mappings = @pod.send(:header_mappings, @pod.header_files_by_spec)
       mappings = mappings.map do |folder, headers|
         "#{folder} > #{headers.sort.map{ |p| p.relative_path_from(@pod.root).to_s }.join(' ')}"
       end
@@ -291,9 +305,22 @@ describe Pod::LocalPod do
         "Chameleon/UIKit > UIKit/Classes/UIView.h UIKit/Classes/UIWindow.h" ]
     end
 
+    # @TODO: This is done by the sandbox and this test should be moved
     it "includes the sandbox of the pod's headers while linking" do
-      @sandbox.expects(:add_header_search_path).with(Pathname.new('Chameleon'))
+      @sandbox.build_headers.expects(:add_search_path).with(Pathname.new('Chameleon'))
+      @sandbox.public_headers.expects(:add_search_path).with(Pathname.new('Chameleon'))
       @pod.link_headers
+    end
+
+    it "differentiates among public and build headers" do
+      subspecs = fixture_spec('chameleon/Chameleon.podspec').subspecs
+      spec = subspecs[0]
+      spec.stubs(:public_header_files).returns("UIKit/Classes/*Kit.h")
+      @pod = Pod::LocalPod.new(spec, @sandbox, Pod::Platform.new(:osx))
+      build_headers = @pod.header_files_by_spec.values.flatten.map{ |p| p.basename.to_s }
+      public_headers = @pod.public_header_files_by_spec.values.flatten.map{ |p| p.basename.to_s }
+      build_headers.sort.should == %w{ UIKit.h UIView.h UIWindow.h }
+      public_headers.should == %w{ UIKit.h }
     end
   end
 end

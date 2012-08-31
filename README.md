@@ -3,19 +3,6 @@ ThirdPartTools
 
 	My own modified tools from third parties
 
-## ChangeLog
-
-2012-06-22 09:12
-
-* Add libFTDI(with libusb) and libftd2xx podspec
-
-2012-06-21 18:14
-
-* Add Cocoapods 0.6.0rc2
-
-2012-06-21
-
-* Split the files into Cocoa Classed, OSX Shell Commands and Other Resources.
 
 ## What is in it
 

@@ -1,8 +1,8 @@
 # CocoaPods – an Objective-C library manager
 
-| Master branch | Develop branch | CocoaPods/Specs |
+| CocoaPods | Xcodeproj | Specs |
 | :---: | :---: | :---: |
-[![Master Build Status](https://secure.travis-ci.org/CocoaPods/CocoaPods.png?branch=master)](https://secure.travis-ci.org/CocoaPods/CocoaPods)|[![Develop Build Status](https://secure.travis-ci.org/CocoaPods/CocoaPods.png?branch=develop)](https://secure.travis-ci.org/CocoaPods/CocoaPods)|[![Build Status](https://secure.travis-ci.org/CocoaPods/Specs.png?branch=master)](http://travis-ci.org/CocoaPods/Specs)
+[![Master Build Status](https://secure.travis-ci.org/CocoaPods/CocoaPods.png?branch=master)](https://secure.travis-ci.org/CocoaPods/CocoaPods)|[![Build Status](https://secure.travis-ci.org/CocoaPods/Xcodeproj.png?branch=master)](http://travis-ci.org/CocoaPods/Xcodeproj)|[![Build Status](https://secure.travis-ci.org/CocoaPods/Specs.png?branch=master)](http://travis-ci.org/CocoaPods/Specs)
 
 
 CocoaPods manages library dependencies for your Xcode project.
@@ -15,7 +15,9 @@ You specify the dependencies for your project in one easy text file. CocoaPods r
 
 Ultimately, the goal is to improve discoverability of, and engagement in, third party open-source libraries, by creating a more centralized ecosystem.
 
-See the [NSScreencast episode about CocoaPods](http://nsscreencast.com/episodes/5-cocoapods) for a quick overview on how to get started, or [the wiki](https://github.com/CocoaPods/CocoaPods/wiki) for more in depth information on several topics.
+See the [NSScreencast](https://twitter.com/NSScreencast) episode about [using CocoaPods](http://nsscreencast.com/episodes/5-cocoapods) for a quick overview on how to get started or [create a Pod specification](http://nsscreencast.com/episodes/28-creating-a-cocoapod), or [the wiki](https://github.com/CocoaPods/CocoaPods/wiki) for more in depth information on several topics.
+
+Or, if you’re already using CocoaPods, you can find the changelog [here](https://github.com/CocoaPods/CocoaPods/blob/master/CHANGELOG.md), which contains an overview of the changes in recent versions.
 
 
 ## Installation
@@ -25,8 +27,7 @@ Downloading and installing CocoaPods only takes a few minutes.
 CocoaPods runs on [Ruby](http://www.ruby-lang.org/en/). To install it run the following commands:
 
 ```
-$ [sudo] gem install cocoapods --pre
-$ pod setup
+$ [sudo] gem install cocoapods
 ```
 
 If you want to have CocoaPods generate documentation for each library, then install the [appledoc](http://gentlebytes.com/appledoc/) tool:
@@ -40,9 +41,10 @@ Now that you've got CocoaPods installed you can easily add it to your project.
 
 **NOTES**
 
-1. If you're using a fresh out of the box Mac with Lion using Xcode from the Mac App Store, you will need to install the Command Line Tools for Xcode first: [here](https://developer.apple.com/downloads/index.action)
+1. If you're using a fresh out of the box Mac with Lion using Xcode from the Mac App Store, you will need to install the Command Line Tools for Xcode first: [here](https://developer.apple.com/downloads/index.action)  
+Or from `Xcode > Settings > Downloads > Components > Command Line Tools`
 
-2. CocoaPods re-uses some of the RubyGems 1.3.6 classes. If you have an older version (pre OS X 10.7), you will have to update RubyGems: `$ gem update --system`.
+2. CocoaPods re-uses some of the RubyGems classes. If you have a version older than 1.4.0, you will have to update RubyGems: `$ gem update --system`.
 
 
 ## Adding it to your project
@@ -71,19 +73,11 @@ $ edit Podfile
 
 ```ruby
 platform :ios
-dependency 'JSONKit',           '~> 1.4'
-dependency 'Reachability',      '~> 2.0.4'
+pod 'JSONKit',           '~> 1.4'
+pod 'Reachability',      '~> 2.0.4'
 ```
 
 And then you [install the dependencies](https://github.com/CocoaPods/CocoaPods/wiki/Creating-a-project-that-uses-CocoaPods) in your project.
-
-```
-$ pod install App.xcodeproj
-```
-
-_Where ‘App.xcodeproj’ is the name of your actual application project._
-
-The next time you change your Podfile, you can update your project by simply running:
 
 ```
 $ pod install
@@ -113,8 +107,6 @@ There are several other ways to start using **any** library without a Pod specif
 All CocoaPods development happens on GitHub, there is a repository for [CocoaPods](https://github.com/CocoaPods/CocoaPods) and one for the [CocoaPods specs](https://github.com/CocoaPods/Specs). Contributing patches or Pods is really easy and gratifying. You even get push access when one of your specs or patches is accepted.
 
 Follow [@CocoaPodsOrg](http://twitter.com/CocoaPodsOrg) to get up to date information about what's going on in the CocoaPods world.
-
-If you're really oldschool and you want to discuss CocoaPods development you can join #cocoapods on irc.freenode.net.
 
 
 # Donations

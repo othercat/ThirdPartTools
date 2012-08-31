@@ -14,24 +14,29 @@ module Pod
       def download
         create_cache unless cache_exist?
         puts '-> Cloning git repo' if config.verbose?
+
         if options[:tag]
           download_tag
+        elsif options[:branch]
+          download_branch
         elsif options[:commit]
           download_commit
         else
           download_head
         end
-        removed_cached_repos_if_needed
+
+        Dir.chdir(target_path) { git! "submodule update --init"  } if options[:submodules]
+        prune_cache
       end
 
       def create_cache
         puts "-> Creating cache git repo (#{cache_path})" if config.verbose?
         cache_path.rmtree if cache_path.exist?
         cache_path.mkpath
-        git "clone '#{url}' #{cache_path}"
+        clone(url, cache_path)
       end
 
-      def removed_cached_repos_if_needed
+      def prune_cache
         return unless caches_dir.exist?
         Dir.chdir(caches_dir) do
           repos = Pathname.new(caches_dir).children.select { |c| c.directory? }.sort_by(&:ctime)
@@ -71,9 +76,9 @@ module Pod
       def update_cache
         puts "-> Updating cache git repo (#{cache_path})" if config.verbose?
         Dir.chdir(cache_path) do
-          git "reset --hard HEAD"
-          git "clean -d -x -f"
-          git "pull"
+          git! "reset --hard HEAD"
+          git! "clean -d -x -f"
+          git! "pull origin master"
         end
       end
 
@@ -89,28 +94,55 @@ module Pod
         raise Informative, "[!] Cache unable to find git reference `#{ref}' for `#{url}'.".red unless ref_exists?(ref)
       end
 
+      def ensure_remote_branch_exists(branch)
+        Dir.chdir(cache_path) { git "branch -r | grep #{branch}$" } # check for remote branch and do suffix matching ($ anchor)
+        return if $? == 0
+        raise Informative, "[!] Cache unable to find git reference `#{branch}' for `#{url}' (#{$?}).".red
+      end
+
       def download_head
-        update_cache
-        git "clone '#{clone_url}' '#{target_path}'"
+        if cache_exist?
+          update_cache
+        else
+          create_cache
+        end
+
+        clone(clone_url, target_path)
+        Dir.chdir(target_path) { git! "submodule update --init"  } if options[:submodules]
       end
 
       def download_tag
         ensure_ref_exists(options[:tag])
         Dir.chdir(target_path) do
-          git "init"
-          git "remote add origin '#{clone_url}'"
-          git "fetch origin tags/#{options[:tag]}"
-          git "reset --hard FETCH_HEAD"
-          git "checkout -b activated-pod-commit"
+          git! "init"
+          git! "remote add origin '#{clone_url}'"
+          git! "fetch origin tags/#{options[:tag]}"
+          git! "reset --hard FETCH_HEAD"
+          git! "checkout -b activated-pod-commit"
         end
       end
 
       def download_commit
         ensure_ref_exists(options[:commit])
-        git "clone '#{clone_url}' '#{target_path}'"
+        clone(clone_url, target_path)
         Dir.chdir(target_path) do
-          git "checkout -b activated-pod-commit #{options[:commit]}"
+          git! "checkout -b activated-pod-commit #{options[:commit]}"
         end
+      end
+
+      def download_branch
+        ensure_remote_branch_exists(options[:branch])
+        clone(clone_url, target_path)
+        Dir.chdir(target_path) do
+          git! "remote add upstream '#{@url}'" # we need to add the original url, not the cache url
+          git! "fetch -q upstream" # refresh the branches
+          git! "checkout --track -b activated-pod-commit upstream/#{options[:branch]}" # create a new tracking branch
+          puts "Just downloaded and checked out branch: #{options[:branch]} from upstream #{clone_url}" if config.verbose?
+        end
+      end
+
+      def clone(from, to)
+        git! %Q|clone "#{from}" "#{to}"|
       end
     end
 
@@ -127,8 +159,12 @@ module Pod
         download_only? ? download_and_extract_tarball(options[:commit]) : super
       end
 
+      def download_branch
+        download_only? ? download_and_extract_tarball(options[:branch]) : super
+      end
+
       def tarball_url_for(id)
-        original_url, username, reponame = *(url.match(/[:\/]([\w\-]+)\/([\w\-]+)\.git/).to_a)
+        original_url, username, reponame = *(url.match(/[:\/]([\w\-]+)\/([\w\-]+)\.git/))
         "https://github.com/#{username}/#{reponame}/tarball/#{id}"
       end
 

@@ -11,10 +11,20 @@ module Pod
       Clones `URL' in the local spec-repos directory at `~/.cocoapods'. The
       remote can later be referred to by `NAME'.
 
-    $ pod repo update NAME
+    $ pod repo update [NAME]
 
       Updates the local clone of the spec-repo `NAME'. If `NAME' is omitted
-      this will update all spec-repos in `~/.cocoapods'.}
+      this will update all spec-repos in `~/.cocoapods'.
+
+    $ pod repo update [NAME | DIRECTORY]
+
+      Lints the spec-repo `NAME'. If a directory is provided it is assumed
+      to be the root of a repo. Finally, if NAME is not provided this will
+      lint all the spec-repos known to CocoaPods.}
+      end
+
+      def self.options
+        [["--only-errors", "Lint presents only the errors"]].concat(super)
       end
 
       extend Executable
@@ -29,6 +39,9 @@ module Pod
           @branch = argv.arguments[3]
         when 'update'
           @name = argv.arguments[1]
+        when 'lint'
+          @name = argv.arguments[1]
+          @only_errors = argv.option('--only-errors')
         else
           super
         end
@@ -64,6 +77,60 @@ module Pod
           end
           check_versions(dir)
         end
+      end
+
+      def lint
+        if @name
+          dirs = File.exists?(@name) ? [ Pathname.new(@name) ] : [ dir ]
+        else
+          dirs = config.repos_dir.children.select {|c| c.directory?}
+        end
+        dirs.each do |dir|
+          check_versions(dir)
+          puts "\nLinting spec repo `#{dir.realpath.basename}'\n".yellow
+          podspecs = dir.glob('**/*.podspec')
+          invalid_count = 0
+
+          podspecs.each do |podspec|
+            linter = Linter.new(podspec)
+            linter.quick     = true
+            linter.repo_path = dir
+
+            linter.lint
+
+            case linter.result_type
+            when :error
+              invalid_count += 1
+              color = :red
+              should_display = true
+            when :warning
+              color = :yellow
+              should_display = !@only_errors
+            end
+
+            if should_display
+              puts " -> ".send(color) << linter.spec_name
+              print_messages('ERROR', linter.errors)
+              unless @only_errors
+                print_messages('WARN',  linter.warnings)
+                print_messages('NOTE',  linter.notes)
+              end
+              puts unless config.silent?
+            end
+          end
+          puts "Analyzed #{podspecs.count} podspecs files.\n\n" unless config.silent?
+
+          if invalid_count == 0
+            puts "All the specs passed validation.".green << "\n\n" unless config.silent?
+          else
+            raise Informative, "#{invalid_count} podspecs failed validation."
+          end
+        end
+      end
+
+      def print_messages(type, messages)
+        return if config.silent?
+        messages.each {|msg| puts "    - #{type.ljust(5)} | #{msg}"}
       end
 
       def check_versions(dir)

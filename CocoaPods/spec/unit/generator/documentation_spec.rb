@@ -26,8 +26,8 @@ describe Pod::Generator::Documentation do
     @doc_installer.appledoc_options.should == [
       '--project-name', 'BananaLib 1.0',
       '--docset-desc', 'Full of chunky bananas.',
-      '--project-company', 'Banana Corp, Monkey Boy',
-      '--docset-copyright', 'Banana Corp, Monkey Boy',
+      '--project-company', 'Banana Corp and Monkey Boy',
+      '--docset-copyright', 'Banana Corp and Monkey Boy',
       '--company-id', 'org.cocoapods',
       '--ignore', '.m',
       '--keep-undocumented-objects',
@@ -35,8 +35,6 @@ describe Pod::Generator::Documentation do
       '--keep-intermediate-files',
       '--exit-threshold', '2',
       '--index-desc', 'README',
-      # TODO We need to either make this a hash so that options can be merged
-      # or not use any defaults in case an options are specified.
       '--project-company', 'Banana Corp',
       '--company-id', 'com.banana'
     ]

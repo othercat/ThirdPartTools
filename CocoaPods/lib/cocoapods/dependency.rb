@@ -1,12 +1,10 @@
-module Gem
-end
-require 'rubygems/dependency'
-require 'open-uri'
+require 'cocoapods/open_uri'
 
 module Pod
   class Dependency < Gem::Dependency
 
-    attr_reader :external_source
+    attr_reader :external_source, :head
+    alias :head? :head
     attr_accessor :specification
 
     def initialize(*name_and_version_requirements, &block)
@@ -16,15 +14,29 @@ module Pod
         super(@specification.name, @specification.version)
 
       elsif !name_and_version_requirements.empty? && block.nil?
+        version = name_and_version_requirements.last
         if name_and_version_requirements.last.is_a?(Hash)
           @external_source = ExternalSources.from_params(name_and_version_requirements[0].split('/').first, name_and_version_requirements.pop)
+        elsif version.is_a?(Symbol) && version == :head || version.is_a?(Version) && version.head?
+          name_and_version_requirements.pop
+          @head = true
         end
+
         super(*name_and_version_requirements)
+
+        if head? && !latest_version?
+          raise Informative, "A `:head' dependency may not specify version requirements."
+        end
 
       else
         raise Informative, "A dependency needs either a name and version requirements, " \
                            "a source hash, or a block which defines a podspec."
       end
+    end
+
+    def latest_version?
+      versions = @version_requirements.requirements.map(&:last)
+      versions == [Gem::Version.new('0')]
     end
 
     def ==(other)
@@ -68,7 +80,10 @@ module Pod
       elsif @version_requirements != Gem::Requirement.default
         version << @version_requirements.to_s
       end
-      version.empty? ? @name : "#{@name} (#{version})"
+      result = @name.dup
+      result += " (#{version})" unless version.empty?
+      result += " [HEAD]" if head?
+      result
     end
 
     def specification_from_sandbox(sandbox, platform)
@@ -132,14 +147,18 @@ module Pod
         end
 
         def specification_from_sandbox(sandbox, platform)
+          specification_from_local(sandbox, platform) || specification_from_external(sandbox, platform)
+        end
+
+        def specification_from_local(sandbox, platform)
           if local_pod = sandbox.installed_pod_named(name, platform)
             local_pod.top_specification
-          else
-            copy_external_source_into_sandbox(sandbox)
-            local_pod = sandbox.installed_pod_named(name, platform)
-            local_pod.clean if config.clean? && local_pod.exists?
-            local_pod.top_specification
           end
+        end
+
+        def specification_from_external(sandbox, platform)
+          copy_external_source_into_sandbox(sandbox, platform)
+          specification_from_local(sandbox, platform)
         end
 
         def ==(other_source)
@@ -149,16 +168,19 @@ module Pod
       end
 
       class GitSource < AbstractExternalSource
-        def copy_external_source_into_sandbox(sandbox)
+        def copy_external_source_into_sandbox(sandbox, platform)
           puts "  * Pre-downloading: '#{name}'" unless config.silent?
-          Downloader.for_target(sandbox.root + name, @params).tap do |downloader|
-            downloader.download
+          downloader = Downloader.for_target(sandbox.root + name, @params)
+          downloader.download
+          if local_pod = sandbox.installed_pod_named(name, platform)
+            local_pod.downloaded = true
           end
         end
 
         def description
           "from `#{@params[:git]}'".tap do |description|
             description << ", commit `#{@params[:commit]}'" if @params[:commit]
+            description << ", branch `#{@params[:branch]}'" if @params[:branch]
             description << ", tag `#{@params[:tag]}'" if @params[:tag]
           end
         end
@@ -166,7 +188,7 @@ module Pod
 
       # can be http, file, etc
       class PodspecSource < AbstractExternalSource
-        def copy_external_source_into_sandbox(sandbox)
+        def copy_external_source_into_sandbox(sandbox, _)
           output_path = sandbox.root + "Local Podspecs/#{name}.podspec"
           output_path.dirname.mkpath
           puts "  * Fetching podspec for `#{name}' from: #{@params[:podspec]}" unless config.silent?

@@ -1,3 +1,169 @@
+## 0.13.0
+
+[CocoaPods](https://github.com/CocoaPods/CocoaPods/compare/0.12.0...0.13.0)
+
+###### Enhancements
+
+- Add Podfile `podspec` which allows to use the dependencies of a podspec file. [#162](https://github.com/CocoaPods/CocoaPods/issues/162)
+- Check if any of the build settings defined in the xcconfig files is overridden. [#92](https://github.com/CocoaPods/CocoaPods/issues/92)
+- The Linter now checks that there are no compiler flags that disable warnings.
+
+###### Bug fixes
+
+- The final project isn’t affected anymore by the `inhibit_all_warnings!` option.
+- Support for redirects while using podspec from an url. [#462](https://github.com/CocoaPods/CocoaPods/issues/462)
+
+## 0.12.0
+
+[CocoaPods](https://github.com/CocoaPods/CocoaPods/compare/0.11.1...0.12.0)
+
+###### Enhancements
+
+- The documentation is generated using the public headers if they are specified.
+- In case of a download failure the installation is aborted and the error message is shown.
+- Git submodules are initialized only if requested.
+- Don’t impose a certain structure of the user’s project by raising if no ‘Frameworks’ group exists. [#431](https://github.com/CocoaPods/CocoaPods/pull/431)
+- Support for GitHub Gists in the linter.
+- Allow specifying ARC settings in subspecs.
+- Add Podfile `inhibit_all_warnings!` which will inhibit all warnings from the Pods library. [#209](https://github.com/CocoaPods/CocoaPods/issues/209)
+- Make the Pods Xcode project prettier by namespacing subspecs in nested groups. [#466](https://github.com/CocoaPods/CocoaPods/pull/466)
+
+
+## 0.11.1
+
+[CocoaPods](https://github.com/CocoaPods/CocoaPods/compare/0.11.0...0.11.1)
+
+###### Bug fixes
+
+- Fixed a crash related to subspecs without header files. [#449]
+- Git submodules are loaded after the appropriate referenced is checked out and will be not loaded anymore in the cache. [#451]
+- Fixed SVN support for the head version. [#432]
+
+
+## 0.11.0
+
+[CocoaPods](https://github.com/CocoaPods/CocoaPods/compare/0.10.0...0.11.0)
+
+###### Enhancements
+
+- Added support for public headers. [#440]
+- Added `pod repo lint`. [#423]
+- Improved support for `:head` option and SVN repositories.
+- When integrating Pods with a project without "Frameworks" group in root of the project, raise an informative message. [#431](https://github.com/CocoaPods/CocoaPods/pull/431)
+- Dropped support for legacy `config.ios?` and `config.osx?`
+
+###### Bug fixes
+
+- Version message now correctly terminates with a 0 exit status.
+- Resolved an issue that lead to git error messages in the error report.
+
+
+## 0.10.0
+
+[CocoaPods](http://git.io/4i75YA)
+
+###### Enhancements
+
+- Added a `--local-only` option to `pod push` so that developers can push locally and test before pushing to a remote. [#405](http://git.io/0ILJEw)
+- Added line number information for errors generated in the Podfile. [#408](http://git.io/fWQvMg)
+- Pods stored in git repositories now initialize submodules. [#406](http://git.io/L9ssSw)
+
+###### Bug fixes
+
+- Removed note about the post install hook form the linter.
+- Improved xcodebuild error detection in the linter.
+- Ensure the git cache exists, before updating it, when trying to install the ‘bleeding edge’ of a pod. [#426](http://git.io/d4eqRA)
+- Clean downloaded external pods **after** resolving and activating (sub)specs. [#414](http://git.io/i77q_w)
+- Support `tar.gz` as filename in a HTTP source. [#428](http://git.io/qhwKkA)
+
+
+## 0.9.2
+
+[CocoaPods](http://git.io/AVlRKg) • [Xcodeproj](http://git.io/xHbc0w)
+
+###### Bug fixes
+
+- When generating the PodsDummy class, make that class unique to each target. [#402](http://git.io/NntYiQ)
+- Raise an informative error message when the platform in the `Podfile` is omitted or incorrect. [#403](http://git.io/k5EcUQ)
+
+
+## 0.9.1
+
+[CocoaPods](http://git.io/_kqAbw)
+
+###### Bug fixes
+
+- CocoaPods 0.9.x needs Xcodeproj 0.3.0.
+
+
+## 0.9.0
+
+[CocoaPods](http://git.io/kucJQw) • [Xcodeproj](http://git.io/5eLL8g)
+
+###### Enhancements
+
+- Force downloading the ‘bleeding edge’ version of a pod with the `:head` flag. [#392](http://git.io/t_NVRQ)
+- Support for weak frameworks. [#263](http://git.io/XZDuog)
+- Use double quotes when shelling out. This makes a url like `$HOME/local/lib` work. [#396](http://git.io/DnBzhA)
+
+###### Bug fixes
+
+- Relaxed linter to accepts pod that only specify paths to preserve (like TuneupJS).
+- Gender neutralization of podfile documentation. [#384](http://git.io/MAsHXg)
+- Exit early when using an old RubyGems version (< 1.4.0). These versions contain subtle bugs
+  related to prerelease version comparisons. Unfortunately, OS X >= 10.7 ships with 1.3.6. [#398](http://git.io/Lr7DoA)
+
+
+## 0.8.0
+
+[CocoaPods](http://git.io/RgMF3w) • [Xcodeproj](http://git.io/KBKE_Q)
+
+###### Breaking change
+
+Syntax change in Podfile: `dependency` has been replaced by `pod`.
+
+``ruby
+platform :ios
+pod 'JSONKit',      '~> 1.4'
+pod 'Reachability', '~> 2.0.4'
+``
+
+###### Bug fixes
+
+- Properly quote all paths given to Git.
+
+
+## 0.7.0
+
+[CocoaPods](http://git.io/Agia6A) • [Xcodeproj](http://git.io/mlqquw)
+
+###### Features
+
+- Added support for branches in git repos.
+- Added support for linting remote files, i.e. `pod spec lint http://raw/file.podspec`.
+- Improved `Spec create template`.
+- The indentation is automatically stripped for podspecs strings.
+
+###### Bug fixes
+
+- The default warnings of Xcode are not overriden anymore.
+- Improvements to the detection of the license files.
+- Improvements to `pod spec lint`.
+- CocoaPods is now case insensitive.
+
+
+## 0.6.1
+
+[CocoaPods](http://git.io/45wFjw) • [Xcodeproj](http://git.io/rRA4XQ)
+
+###### Bug fixes
+
+- Switched to master branch for specs repo.
+- Fixed a crash with `pod spec lint` related to `preserve_paths`.
+- Fixed a bug that caused subspecs to not inherit the compiler flags of the top level specification.
+- Fixed a bug that caused duplication of system framworks.
+
+
 ## 0.6.0
 
 A full list of all the changes since 0.5.1 can be found [here][6].
@@ -10,7 +176,7 @@ CocoaPods can now integrate all the targets specified in your `Podfile`.
 To specify which target, in your Xcode project, a Pods target should be linked
 with, use the `link_with` method like so:
 
-```ruby
+``ruby
 platform :ios
 
 workspace 'MyWorkspace'
@@ -23,7 +189,7 @@ target :test, :exclusive => true do
   link_with 'TestRunnerTarget'
   dependency 'Kiwi'
 end
-```
+``
 
 _NOTE: As you can see it can take either one target name, or an array of names._
 
@@ -98,7 +264,7 @@ class ::Pod::Generator::Acknowledgements
 end
 ```
 
-You can even go one step further and customise the text on a per target basis by 
+You can even go one step further and customise the text on a per target basis by
 checking against the target name, like this:
 
 ```ruby
@@ -204,8 +370,6 @@ podspec, then update these method calls.
 * Added weak quoting to `ibtool` input paths.
 
 
----------------------------------------
-
 ## 0.5.0
 
 No longer requires MacRuby. Runs on MRI 1.8.7 (OS X system version) and 1.9.3.
@@ -213,14 +377,10 @@ No longer requires MacRuby. Runs on MRI 1.8.7 (OS X system version) and 1.9.3.
 A full list of all the changes since 0.3.0 can be found [here][7].
 
 
----------------------------------------
-
 ## 0.4.0
 
 Oops, accidentally skipped this version.
 
-
----------------------------------------
 
 ## 0.3.0
 
@@ -231,7 +391,7 @@ different sets of depedencies. This means that you can create a separate
 library which contains all dependencies, including extra ones that you only use
 in, for instance, a debug or test build. [[docs][1]]
 
-```Ruby
+```ruby
 # This Podfile will build three static libraries:
 # * libPods.a
 # * libPods-debug.a
@@ -260,7 +420,7 @@ A dependency can take a git url if the repo contains a podspec file in its
 root, or a podspec can be loaded from a file or HTTP location. If no podspec is
 available, a specification can be defined inline in the Podfile. [[docs][2]]
 
-```Ruby
+```ruby
 # From a spec repo.
 dependency 'SSToolkit'
 
@@ -298,7 +458,7 @@ end
 This allows the user to customize, for instance, the generated Xcode project
 _before_ it’s written to disk. [[docs][3]]
 
-```Ruby
+```ruby
 # Enable garbage collection support for MacRuby applications.
 post_install do |installer|
   installer.project.targets.each do |target|

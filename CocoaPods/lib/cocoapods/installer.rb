@@ -28,9 +28,11 @@ module Pod
       @project.user_build_configurations = @podfile.user_build_configurations
       pods.each do |pod|
         # Add all source files to the project grouped by pod
-        group = @project.add_pod_group(pod.name)
-        pod.relative_source_files.each do |path|
-          group.files.new('path' => path.to_s)
+        pod.relative_source_files_by_spec.each do |spec, paths|
+          group = @project.add_spec_group(spec.name)
+          paths.each do |path|
+            group.files.new('path' => path.to_s)
+          end
         end
       end
       # Add a group to hold all the target support files
@@ -48,19 +50,43 @@ module Pod
       pods.each do |pod|
         unless config.silent?
           marker = config.verbose ? "\n-> ".green : ''
-          name = pod.top_specification.preferred_dependency ? "#{pod.top_specification.name}/#{pod.top_specification.preferred_dependency} (#{pod.top_specification.version})" : pod.to_s
+          if subspec_name = pod.top_specification.preferred_dependency
+            name = "#{pod.top_specification.name}/#{subspec_name} (#{pod.top_specification.version})"
+          else
+            name = pod.to_s
+          end
+          name << " [HEAD]" if pod.top_specification.version.head?
           puts marker << ( pod.exists? ? "Using #{name}" : "Installing #{name}".green )
         end
 
-        unless pod.exists?
-          downloader = Downloader.for_pod(pod)
-          downloader.download
-          # The docs need to be generated before cleaning because
-          # the documentation is created for all the subspecs.
+        download_pod(pod) unless pod.exists?
+
+        # This will not happen if the pod existed before we started the install
+        # process.
+        if pod.downloaded?
+          # The docs need to be generated before cleaning because the
+          # documentation is created for all the subspecs.
           generate_docs(pod)
-          pod.clean if config.clean
+          # Here we clean pod's that just have been downloaded or have been
+          # pre-downloaded in AbstractExternalSource#specification_from_sandbox.
+          pod.clean! if config.clean?
         end
       end
+    end
+
+    def download_pod(pod)
+      downloader = Downloader.for_pod(pod)
+      # Force the `bleeding edge' version if necessary.
+      if pod.top_specification.version.head?
+        if downloader.respond_to?(:download_head)
+          downloader.download_head
+        else
+          raise Informative, "The downloader of class `#{downloader.class.name}' does not support the `:head' option."
+        end
+      else
+        downloader.download
+      end
+      pod.downloaded = true
     end
 
     #TODO: move to generator ?
@@ -90,10 +116,10 @@ module Pod
         acknowledgements_path = target_installer.target_definition.acknowledgements_path
         Generator::Acknowledgements.new(target_installer.target_definition,
                                         pods_for_target).save_as(acknowledgements_path)
+        generate_dummy_source(target_installer)
       end
 
       generate_lock_file!(specifications)
-      generate_dummy_source
 
       puts "- Running post install hooks" if config.verbose?
       # Post install hooks run _before_ saving of project, so that they can alter it before saving.
@@ -155,17 +181,17 @@ module Pod
       end
     end
 
-    def generate_dummy_source
-      filename = "PodsDummy.m"
+    def generate_dummy_source(target_installer)
+      class_name_identifier = target_installer.target_definition.label
+      dummy_source = Generator::DummySource.new(class_name_identifier)
+      filename = "#{dummy_source.class_name}.m"
       pathname = Pathname.new(sandbox.root + filename)
-      Generator::DummySource.new.save_as(pathname)
+      dummy_source.save_as(pathname)
 
       project_file = project.files.new('path' => filename)
       project.group("Targets Support Files") << project_file
 
-      target_installers.each do |target_installer|
-        target_installer.target.source_build_phases.first << project_file
-      end
+      target_installer.target.source_build_phases.first << project_file
     end
 
     def specs_by_target
@@ -189,16 +215,10 @@ module Pod
       specs_by_target.each do |target_definition, specs|
         @pods_by_spec[target_definition.platform] = {}
         result[target_definition] = specs.map do |spec|
-          pod = pod_for_spec(spec, target_definition.platform)
-          pod.add_specification(spec)
-          pod
+          @sandbox.local_pod_for_spec(spec, target_definition.platform)
         end.uniq.compact
       end
       result
-    end
-
-    def pod_for_spec(spec, platform)
-      @pods_by_spec[platform][spec.top_level_parent.name] ||= LocalPod.new(spec, @sandbox, platform)
     end
 
     private
