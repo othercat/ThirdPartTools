@@ -1,18 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "modes.h"
 // TODO: rewrite
 // FIXME: cleanup 'static' variables
 
 typedef unsigned char byte;
-float vfreq = 0.0;
 /* byte must be 8 bits */
 
 /* int must be at least 16 bits */
 
 /* long must be at least 32 bits */
 
+#define VERSION "2.0.0"
 
 #define DIE_MSG( x ) \
         { MSG( x ); exit( 1 ); }
@@ -162,8 +162,7 @@ const byte edid_v1_descriptor_flag[] = { 0x00, 0x00 };
 #define DPMS_SUSPEND		(1 << 6)
 #define DPMS_STANDBY		(1 << 7)
 
-char* myname = "ParseEDID 1.4.1";
-void MSG( const char* x );
+char* myname;
 
 void MSG( const char* x )
 {
@@ -172,18 +171,18 @@ void MSG( const char* x )
 
 
 int
-parse_edid( byte* edid,int isSilent);
+parse_edid( byte* edid );
 
 
 int
-parse_timing_description( byte* dtd ,int isSilent );
+parse_timing_description( byte* dtd );
 
 
 int
-parse_monitor_limits( byte* block ,int isSilent );
+parse_monitor_limits( byte* block );
 
 int
-block_type( byte* block ,int isSilent );
+block_type( byte* block );
 
 char*
 get_monitor_name( byte const*  block );
@@ -192,7 +191,7 @@ char*
 get_vendor_sign( byte const* block );
 
 int
-parse_dpms_capabilities( byte flags,int isSilent  );
+parse_dpms_capabilities( byte flags );
 
 /*
 int
@@ -232,46 +231,610 @@ main( int argc, char** argv )
 
   return parse_edid( edid );
 }
-*/
+ */
+
+#define CHECK_BIT(var,pos)                ((var) & (1<<(pos)))
+#define EDID_COMBINE_HI_8LO( hi, lo )     ((((unsigned)hi) << 8) | (unsigned)lo )
+#define EDID_LENGTH                       0x80
+#define EDID_SYS_PATH                     "/sys/class/drm"
+#define EDID_VIDEO_INPUT_DFP1_COMPAT      0x01
+#define EDID_VIDEO_INPUT_LEVEL(x)         (((x) & 0x60) >> 5)
+#define EDID_DPMS_ACTIVE_OFF              (1 << 5)
+#define EDID_DPMS_SUSPEND                 (1 << 6)
+#define EDID_DPMS_STANDBY                 (1 << 7)
+#define EDID_STD_TIMING_HRES(ptr)         ((((ptr)[0]) * 8) + 248)
+#define EDID_STD_TIMING_VFREQ(ptr)        ((((ptr)[1]) & 0x3f) + 60)
+#define EDID_STD_TIMING_RATIO(ptr)        ((ptr)[1] & 0xc0)
+#define EDID_BLOCK_IS_DET_TIMING(ptr)     ((ptr)[0] | (ptr)[1])
+#define EDID_DET_TIMING_DOT_CLOCK(ptr)    (((ptr)[0] | ((ptr)[1] << 8)) * 10000)
+#define EDID_HACT_LO(ptr)                 ((ptr)[2])
+#define EDID_HBLK_LO(ptr)                 ((ptr)[3])
+#define EDID_HACT_HI(ptr)                 (((ptr)[4] & 0xf0) << 4)
+#define EDID_HBLK_HI(ptr)                 (((ptr)[4] & 0x0f) << 8)
+#define EDID_DET_TIMING_HACTIVE(ptr)      (EDID_HACT_LO(ptr) | EDID_HACT_HI(ptr))
+#define EDID_DET_TIMING_HBLANK(ptr)       (EDID_HBLK_LO(ptr) | EDID_HBLK_HI(ptr))
+#define EDID_VACT_LO(ptr)                 ((ptr)[5])
+#define EDID_VBLK_LO(ptr)                 ((ptr)[6])
+#define EDID_VACT_HI(ptr)                 (((ptr)[7] & 0xf0) << 4)
+#define EDID_VBLK_HI(ptr)                 (((ptr)[7] & 0x0f) << 8)
+#define EDID_DET_TIMING_VACTIVE(ptr)      (EDID_VACT_LO(ptr) | EDID_VACT_HI(ptr))
+#define EDID_DET_TIMING_VBLANK(ptr)       (EDID_VBLK_LO(ptr) | EDID_VBLK_HI(ptr))
+#define EDID_HOFF_LO(ptr)                 ((ptr)[8])
+#define EDID_HWID_LO(ptr)                 ((ptr)[9])
+#define EDID_VOFF_LO(ptr)                 ((ptr)[10] >> 4)
+#define EDID_VWID_LO(ptr)                 ((ptr)[10] & 0xf)
+#define EDID_HOFF_HI(ptr)                 (((ptr)[11] & 0xc0) << 2)
+#define EDID_HWID_HI(ptr)                 (((ptr)[11] & 0x30) << 4)
+#define EDID_VOFF_HI(ptr)                 (((ptr)[11] & 0x0c) << 2)
+#define EDID_VWID_HI(ptr)                 (((ptr)[11] & 0x03) << 4)
+#define EDID_DET_TIMING_HSYNC_OFFSET(ptr) (EDID_HOFF_LO(ptr) | EDID_HOFF_HI(ptr))
+#define EDID_DET_TIMING_HSYNC_WIDTH(ptr)  (EDID_HWID_LO(ptr) | EDID_HWID_HI(ptr))
+#define EDID_DET_TIMING_VSYNC_OFFSET(ptr) (EDID_VOFF_LO(ptr) | EDID_VOFF_HI(ptr))
+#define EDID_DET_TIMING_VSYNC_WIDTH(ptr)  (EDID_VWID_LO(ptr) | EDID_VWID_HI(ptr))
+#define EDID_HSZ_LO(ptr)                  ((ptr)[12])
+#define EDID_VSZ_LO(ptr)                  ((ptr)[13])
+#define EDID_HSZ_HI(ptr)                  (((ptr)[14] & 0xf0) << 4)
+#define EDID_VSZ_HI(ptr)                  (((ptr)[14] & 0x0f) << 8)
+#define EDID_DET_TIMING_HSIZE(ptr)        (EDID_HSZ_LO(ptr) | EDID_HSZ_HI(ptr))
+#define EDID_DET_TIMING_VSIZE(ptr)        (EDID_VSZ_LO(ptr) | EDID_VSZ_HI(ptr))
+#define EDID_DET_TIMING_HBORDER(ptr)      ((ptr)[15])
+#define EDID_DET_TIMING_VBORDER(ptr)      ((ptr)[16])
+#define EDID_DET_TIMING_FLAGS(ptr)        ((ptr)[17])
+#define EDID_DET_TIMING_VSOBVHSPW(ptr)    ((ptr)[11])
+
+struct edid_block {
+    uint8_t  header[8];               // EDID header "00 FF FF FF FF FF FF 00"
+    uint16_t manufacturerCode;        // EISA 3-character ID
+    uint16_t productCode;             // Vendor assigned code
+    uint32_t serialNumber;            // Serial number
+    uint8_t  manufacturedWeek;        // Week number
+    uint8_t  manufacturedYear;        // Year number + 1990
+    uint8_t  version;                 // EDID version
+    uint8_t  revision;                // EDID revision
+    uint8_t  videoInputDefinition;
+    uint8_t  maxHorizontalImageSize;  // in cm
+    uint8_t  maxVerticalImageSize;    // in cm
+    uint8_t  displayGamma;            // gamma
+    uint8_t  dpmSupport;              // DPMS
+    uint8_t  redGreenLowBits;         // Rx1 Rx0 Ry1 Ry0 Gx1 Gx0 Gy1Gy0
+    uint8_t  blueWhiteLowBits;        // Bx1 Bx0 By1 By0 Wx1 Wx0 Wy1 Wy0
+    uint8_t  redX;                    // Red-x Bits 9 - 2
+    uint8_t  redY;                    // Red-y Bits 9 - 2
+    uint8_t  greenX;                  // Green-x Bits 9 - 2
+    uint8_t  greenY;                  // Green-y Bits 9 - 2
+    uint8_t  blueX;                   // Blue-x Bits 9 - 2
+    uint8_t  blueY;                   // Blue-y Bits 9 - 2
+    uint8_t  whiteX;                  // White-x Bits 9 - 2
+    uint8_t  whiteY;                  // White-x Bits 9 - 2
+    uint8_t  establishedTimings[3];
+    uint8_t  standardTimings[16];
+    uint8_t  descriptionBlock1[18];
+    uint8_t  descriptionBlock2[18];
+    uint8_t  descriptionBlock3[18];
+    uint8_t  descriptionBlock4[18];
+    uint8_t  extensions;              // Number of (optional) 128-byte EDID extension blocks
+    uint8_t  checksum;
+} __attribute__((packed));
+
+
+// from NetBSD edid code
+const char *edid_established_modes[] = {
+    "1280x1024 @ 75Hz",
+    "1024x768 @ 75Hz",
+    "1024x768 @ 70Hz",
+    "1024x768 @ 60Hz",
+    "1024x768 @ 87Hz",
+    "832x624 @ 75Hz",
+    "800x600 @ 75Hz",
+    "800x600 @ 72Hz",
+    "800x600 @ 60Hz",
+    "800x600 @ 56Hz",
+    "640x480 @ 75Hz",
+    "640x480 @ 72Hz",
+    "640x480 @ 67Hz",
+    "640x480 @ 60Hz",
+    "720x400 @ 88Hz",
+    "720x400 @ 70Hz"
+};
+
+int last_stb_mode = 0;
+
+char *
+manufacturer_abbrev(uint8_t *edid)
+{
+    struct edid_block *eb = (struct edid_block *)edid;
+    static char mcode[8];
+    uint16_t h;
+    uint8_t *block = (uint8_t *)&(eb->manufacturerCode);
+    
+    h = EDID_COMBINE_HI_8LO(block[0], block[1]);
+    mcode[0] = ((h>>10) & 0x1f) + 'A' - 1;
+    mcode[1] = ((h>>5) & 0x1f) + 'A' - 1;
+    mcode[2] = (h & 0x1f) + 'A' - 1;
+    mcode[3] = 0;
+    
+    return mcode;
+}
+
+
+
+char *
+display_gamma(uint8_t *edid)
+{
+    struct edid_block *eb = (struct edid_block *)edid;
+    static char mcode[8];
+    float g1 = (float)eb->displayGamma;
+    float g2 = 1.00 + (g1/100);
+    
+    sprintf(mcode, "%.3f", g2);
+    
+    return mcode;
+}
+
+void
+print_std_timing(uint8_t *stb)
+{
+    unsigned  hres, vres, freq;
+    float aspectratio;
+    
+    if ((stb[0] == 1 && stb[1] == 1) ||
+        (stb[0] == 0 && stb[1] == 0) ||
+        (stb[0] == 0x20 && stb[1] == 0x20))
+        return;
+    
+    hres = EDID_STD_TIMING_HRES(stb);
+    switch (EDID_STD_TIMING_RATIO(stb)) {
+        case 0x00:
+            aspectratio = 10.0/16;
+            break;
+        case 0x40:
+            aspectratio = 3.0/4;
+            break;
+        case 0x80:
+            aspectratio = 4.0/5;
+            break;
+        case 0xC0:
+        default:
+            aspectratio = 9.0/16;
+            break;
+    }
+    vres = hres * aspectratio;
+    freq = EDID_STD_TIMING_VFREQ(stb);
+    
+    printf("       <Resolution>\n");
+    printf("           <Mode>%d</Mode>\n", last_stb_mode);
+    printf("           <XResolution>%d</XResolution>\n", hres);
+    printf("           <YResolution>%d</YResolution>\n", vres);
+    printf("           <AspectRatio>%.3f</AspectRatio>\n", aspectratio);
+    printf("           <VertRefreshFreq units=\"Hz\">%d</VertRefreshFreq>\n", freq);
+    printf("       </Resolution>\n");
+    
+    last_stb_mode++;
+}
+
+
+void
+print_det_timing(uint8_t *dtb)
+{
+    unsigned    hactive, hblank, hsyncwid, hsyncoff;
+    unsigned    vactive, vblank, vsyncwid, vsyncoff;
+    uint8_t     flags;
+    static char flagstr[400];
+    
+    hactive  = EDID_DET_TIMING_HACTIVE(dtb);
+    hblank   = EDID_DET_TIMING_HBLANK(dtb);
+    hsyncwid = EDID_DET_TIMING_HSYNC_WIDTH(dtb);
+    hsyncoff = EDID_DET_TIMING_HSYNC_OFFSET(dtb);
+    
+    vactive  = EDID_DET_TIMING_VACTIVE(dtb);
+    vblank   = EDID_DET_TIMING_VBLANK(dtb);
+    vsyncwid = EDID_DET_TIMING_VSYNC_WIDTH(dtb);
+    vsyncoff = EDID_DET_TIMING_VSYNC_OFFSET(dtb);
+    
+    printf("   <DescriptorBlock number=\"1\">\n");
+    printf("       <HoriFreq units=\"kHz\">%d</HoriFreq>\n", dtb[0]);
+    printf("       <VertFreq units=\"Hz\">%d</VertFreq>\n", dtb[1]);
+    printf("       <HoriActiveTimePixels>%d</HoriActiveTimePixels>\n", hactive);
+    printf("       <HoriBlankTimePixels>%d</HoriBlankTimePixels>\n", hblank);
+    printf("       <HoriActiveTimeByHoriBlankingTime>%d</HoriActiveTimeByHoriBlankingTime>\n", dtb[4]);
+    printf("       <VertActiveTimeLines>%d</VertActiveTimeLines>\n", vactive);
+    printf("       <VertBlankTimeLines>%d</VertBlankTimeLines>\n", vblank);
+    printf("       <VertActiveTimeByVertBlankTime>%d</VertActiveTimeByVertBlankTime>\n", dtb[7]);
+    printf("       <HoriSyncOffsetPixels>%d</HoriSyncOffsetPixels>\n", hsyncoff);
+    printf("       <HoriSyncPulseWidthPixels>%d</HoriSyncPulseWidthPixels>\n", hsyncwid);
+    printf("       <VertSyncOffsetByVertSyncPulsewidth>%d</VertSyncOffsetByVertSyncPulsewidth>\n", dtb[10]);
+    printf("       <VertByHoriSyncOffsetByVertByHoriSyncPulsewidth\">%d</VertByHoriSyncOffsetByVertByHoriSyncPulsewidth>\n", EDID_DET_TIMING_VSOBVHSPW(dtb));
+    printf("       <HoriImageSize>%d</HoriImageSize>\n", EDID_DET_TIMING_HSIZE(dtb));
+    printf("       <VertImageSize>%d</VertImageSize>\n", EDID_DET_TIMING_VSIZE(dtb));
+    printf("       <HoriImgSizeByVertImgSize>%d</HoriImgSizeByVertImgSize>\n", dtb[14]);
+    printf("       <HoriBorder>%d</HoriBorder>\n", EDID_DET_TIMING_HBORDER(dtb));
+    printf("       <VertBorder>%d</VertBorder>\n", EDID_DET_TIMING_VBORDER(dtb));
+    
+    flags = EDID_DET_TIMING_FLAGS(dtb);
+    printf("       <DisplayType\">\n");
+    if (CHECK_BIT(flags, 7))
+        printf("           <Property>interlaced</Property>\n");
+    if (CHECK_BIT(flags, 6)) {
+        if (!CHECK_BIT(flags, 5))
+            printf("           <Property>stereo, left stereo sync high</Property>\n");
+    } else {
+        if (CHECK_BIT(flags, 5))
+            printf("           <Property>stereo, right stereo sync high</Property>\n");
+        else
+            printf("           <Property>normal display (no stereo)</Property>\n");
+    }
+    if (CHECK_BIT(flags, 4)) {
+        if (CHECK_BIT(flags, 3))
+            printf("           <Property>sync digital separate</Property>\n");
+        else
+            printf("           <Property>sync digital composite</Property>\n");
+    } else {
+        if (CHECK_BIT(flags, 3))
+            printf("           <Property>sync bipolar analog composite</Property>\n");
+        else
+            printf("           <Property>sync analog composite</Property>\n");
+    }
+    if ((CHECK_BIT(flags, 4)) && (CHECK_BIT(flags, 3))) {
+        if (CHECK_BIT(flags, 2))
+            printf("           <Property>PositiveVerticalSyncPolarity</Property>\n");
+        else
+            printf("           <Property>NegativeVerticalSyncPolarity</Property>\n");
+        if (CHECK_BIT(flags, 1))
+            printf("           <Property>PositiveHorizontalSyncPolarity</Property>\n");
+        else
+            printf("           <Property>NegativeHorizontalSyncPolarity</Property>\n");
+    } else {
+        if (CHECK_BIT(flags, 2))
+            printf("            <Property>serrate</Property>\n");
+        if (CHECK_BIT(flags, 1))
+            printf("            <Property>SyncLocationOnRGB</Property>\n");
+        else
+            printf("            <Property>SyncLocationOnGreen</Property>\n");
+    }
+    printf("       </DisplayType\">\n");
+    
+    printf("   </DescriptorBlock>\n");
+}
+
+
+void
+print_description_block(uint8_t *data, int num)
+{
+    static char mcode[20];
+    char *c  = mcode;
+    
+    switch (*(data + 3)) {
+        case  0xFA:
+            print_std_timing(data + 5);
+            break;
+            
+        case  0xFB:
+            break;
+    }
+    
+    printf("   <DescriptorBlock number=\"%d\">\n", num);
+    switch (*(data + 3)) {
+        case  0xFC:
+        case  0xFF:
+        case  0xFE:
+            memcpy(mcode, data + 5, 13);
+            while (*c != 0x0A)
+                c++;
+            *c = '\0';
+            if (*(data + 3) == 0xFC) {
+                printf("       <ModelNumber>%s</ModelNumber>\n", mcode);
+            } else if (*(data + 3) == 0xFF) {
+                printf("       <SerialNumber\">%s</SerialNumber>\n", mcode);
+            } else {
+                printf("       <Comment\">%s</Comment>\n", mcode);
+            }
+            break;
+            
+        case  0xFD:
+            printf("       <MinVertRefreshFreq units=\"Hz\">%d</MinVertRefreshFreq>\n", *(data + 5));
+            printf("       <MaxVertRefreshFreq units=\"Hz\">%d</MaxVertRefreshFreq>\n", *(data + 6));
+            printf("       <MinHoriRefreshFreq units=\"KHz\">%d</MinHoriRefreshFreq>\n", *(data + 7));
+            printf("       <MaxHoriRefreshFreq units=\"KHz\">%d</MaxHoriRefreshFreq>\n", *(data + 8));
+    }
+    printf("   </DescriptorBlock>\n");
+}
 
 int
-parse_edid( byte* edid,int isSilent)
+print_edid(struct edid_block edid)
+{
+    uint16_t estmodes;
+    int i;
+    
+    printf("<Edid version=\"%d\" revision=\"%d\">\n", edid.version, edid.revision);
+    printf("   <VendorId>%02X</VendorId>\n", edid.manufacturerCode);
+    printf("   <VendorAbbreviation>%s</VendorAbbreviation>\n", manufacturer_abbrev((uint8_t *)&edid));
+    printf("   <ProductId>%02X</ProductId>\n", edid.productCode);
+    printf("   <ManufactureWeek>%d</ManufactureWeek>\n", edid.manufacturedWeek);
+    printf("   <ManufactureYear>%d</ManufactureYear>\n", edid.manufacturedYear + 1990);
+    
+    printf("   <VideoInputDefinition>");
+    if (CHECK_BIT(edid.videoInputDefinition, 7))
+        printf("Analog");
+    else
+        printf("Digital");
+    printf("</VideoInputDefinition>\n");
+    
+    printf("   <Syncronization>");
+    if (edid.videoInputDefinition & 0x1F) {
+        
+        if (CHECK_BIT(edid.videoInputDefinition, 4))
+            printf("   <Property>BlankToBackSetup</Property>\n");
+        if (CHECK_BIT(edid.videoInputDefinition, 3))
+            printf("   <Property>SeparateSync</Property>\n");
+        if (CHECK_BIT(edid.videoInputDefinition, 2))
+            printf("   <Property>CompositeSync</Property>\n");
+        if (CHECK_BIT(edid.videoInputDefinition, 1))
+            printf("   <Property>SyncOnGreen</Property>\n");
+        if (CHECK_BIT(edid.videoInputDefinition, 0))
+            printf("   <Property>SerrationVSync</Property>\n");
+        printf("   </Syncronization>\n");
+    } else
+        printf("   <Syncronization/>\n");
+    
+    printf("   <VideoVoltageLevel>");
+    switch  EDID_VIDEO_INPUT_LEVEL(edid.videoInputDefinition) {
+    case 0:
+        printf("0.700V/0.300V (1.0 Vp-p)");
+        break;
+    case 1:
+        printf("0.714V,0.286V");
+        break;
+    case 2:
+        printf("1.000V/0.400V");
+        break;
+    case 3:
+        printf("0.700V/0.000V");
+        break;
+    default:
+        break;
+    }
+    printf("</VideoVoltageLevel>\n");
+    
+    if (CHECK_BIT(edid.videoInputDefinition, 7))
+        printf("   <SignalType>DigitalSignal</SignalType>\n");
+    else
+        printf("   <SignalType>AnalogSignal</SignalType>\n");
+    
+    printf("   <MaxHoriSize units=\"cm\">%.1d</MaxHoriSize>\n", edid.maxHorizontalImageSize );
+    printf("   <MaxVertSize units=\"cm\">%.1d</MaxVertSize>\n", edid.maxVerticalImageSize );
+    printf("   <Gamma>%s</Gamma>\n", display_gamma((uint8_t *)&edid));
+    
+    printf("   <DisplayType>");
+    if (CHECK_BIT(edid.dpmSupport, 3) && CHECK_BIT(edid.dpmSupport, 4)) {
+        printf("Undefined");
+    } else if (CHECK_BIT(edid.dpmSupport, 3)) {
+        printf("RGB color");
+    } else if (CHECK_BIT(edid.dpmSupport, 4)) {
+        printf("Non-RGB multicolor");
+    } else {
+        printf("Monochrome");
+    }
+    printf("</DisplayType>\n");
+    
+    printf("   <DisplayPowerManagementOptions>\n");
+    if (edid.dpmSupport & EDID_DPMS_ACTIVE_OFF)
+        printf("       <Property>ActiveOff/LowPower</Property>\n");
+    if (edid.dpmSupport & EDID_DPMS_SUSPEND)
+        printf("       <Property>Suspend</Property>\n");
+    if (edid.dpmSupport & EDID_DPMS_STANDBY)
+        printf("       <Property>Standby</Property>\n");
+    printf("   </DisplayPowerManagementOptions>\n");
+    
+    printf("   <ColorCharacteristics>\n");
+    printf("       <GreenRedXY>%d</GreenRedXY>\n", edid.redGreenLowBits);
+    printf("       <WhiteBlueXY>%d</WhiteBlueXY>\n", edid.blueWhiteLowBits);
+    printf("       <RedY>%d</RedY>\n", edid.redY);
+    printf("       <RedX>%d</RedX>\n", edid.redX);
+    printf("       <GreenY>%d</GreenY>\n", edid.greenY);
+    printf("       <GreenX>%d</GreenX>\n", edid.greenX);
+    printf("       <BlueY>%d</BlueY>\n", edid.blueY);
+    printf("       <BlueX>%d</BlueX>\n", edid.blueX);
+    printf("       <WhiteY>%d</WhiteY>\n", edid.whiteY);
+    printf("       <WhiteX>%d</WhiteX>\n", edid.whiteX);
+    printf("   </ColorCharacteristics>\n");
+    
+    printf("   <EstablishedTimings>\n");
+    estmodes = (uint16_t)(edid.establishedTimings[0]);
+    for (i = 0; i < 16; i++) {
+        if (estmodes & (1 << i)) {
+            printf("       <EstablishedTiming\">%s</EstablishedTiming> \n", edid_established_modes[i] );
+        }
+    }
+    printf("   </EstablishedTimings>\n");
+    
+    printf("   <AvailableResolutions>\n");
+    for (i = 0; i < 8; i++) {
+        print_std_timing((uint8_t *)&(edid.standardTimings[2*i]));
+    }
+    printf("   </AvailableResolutions>\n");
+    
+    print_det_timing((uint8_t *)&(edid.descriptionBlock1[0]));
+    
+    print_description_block((uint8_t *)&(edid.descriptionBlock2), 2);
+    print_description_block((uint8_t *)&(edid.descriptionBlock3), 3);
+    print_description_block((uint8_t *)&(edid.descriptionBlock4), 4);
+    
+    printf("</Edid>\n");
+    
+    return 0;
+}
+
+
+int
+check_edid(uint8_t *edid)
+{
+    uint8_t i;
+    uint8_t checksum = 0;
+    const uint8_t eb_header[] = {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00};
+    struct edid_block *eb = (struct edid_block *)edid;
+    
+    // check EDID block checksum
+    for (i = 0; i < EDID_LENGTH; i++) {
+        checksum += edid[i];
+    }
+    if (checksum != 0) {
+        return(1);
+    }
+    
+    // check EDID header signature
+    if (edid[0] == 0x00) {
+        checksum = 0;
+        for (i = 0; i < sizeof(eb); i++) {
+            if (edid[i] == eb_header[i])
+                checksum++;
+        }
+        if (checksum != 8) {
+            return(1);
+        }
+    }
+    
+    // check EDID version
+    if (eb->version != 1 ||  eb->revision > 4 ) {
+        return(1);
+    }
+    
+    return(0);
+}
+
+char modearray[128][128];
+int native;
+int currentmode;
+
+int parseextb(byte* extb) {
+	int i, curloc, j;
+	//char nativename[64];
+	byte sum =0;
+	printf("\n#Extension block found. Parsing...\n");
+	/*
+     for (i = 0; i < 128; i++)
+     printf("byte %xh is 0x%x\n", i, extb[i]);
+     */
+	//printf("Tag: %x\n", extb[0]);
+	
+	for (i=0;i<128;i++) {
+		sum +=extb[i];
+	}
+	if (sum != 0x00) {
+		printf("Extension block checksum failed\n");
+	}
+    
+	if (extb[0] != 0x02)
+		printf("only know about extension blocks of type 02h... ABORT!\n");
+	curloc = extb[2];
+	if (curloc == 0) {
+		printf("#No data in the extension block\n");
+		return 0;
+	}
+    
+	
+	//printf("There are %i bytes of data block\n", curloc - 4);
+	
+	if (curloc > 4) {
+		if (extb[4] & 0xE0 != 0x40) { //if the first one is not a video one
+			printf("have data blocks, but not video ones... weird\n");
+		}
+        
+		for (i=0;i<(extb[4]&0x1F);i++) {
+            sprintf(modearray[currentmode], "%s", ceamodes[extb[5+i]&0x7F]);
+            if (extb[5+i]&0x80 == 0x80 && native == -1) {
+                native = currentmode;
+            }
+            currentmode++;
+		}
+        
+	}
+    
+	//starting 18-byte DTD's.
+    
+    
+	//Copypaste the DTD stuff from above.
+	int hactive, vactive, pixclk, hsyncoff, hsyncwidth, hblank, vsyncoff, vsyncwidth, vblank;
+	//Parse for Detailed Timing Descriptors...
+	for (i = curloc; i < curloc+(18*4); i += 0x12) { //read through descriptor blocks...
+		if ((extb[i] != 0x00) && (extb[i+1] != 0x00)) { //a dtd
+			hactive = extb[i+2] + ((extb[i+4] & 0xf0) << 4);
+			hblank = extb[i+3] + ((extb[i+4] & 0x0f) << 8);
+			vactive = extb[i+5] + ((extb[i+7] & 0xf0) << 4);
+			vblank = extb[i+6] + ((extb[i+7] & 0x0f) << 8);
+            
+			//printf("\tModeline \t\"%dx%d\" ", hactive, vactive);
+			
+			if (i == curloc && extb[3]&0x0F > 0) {
+				native = currentmode;
+				//sprintf(nativename, "%dx%d", hactive, vactive);
+			}
+            
+			pixclk = (extb[i+1] << 8) | (extb[i]);
+            
+			sprintf(modearray[currentmode], "%.2f ", (double)pixclk / 100.0);
+			
+			//I'm using Fremlin's nomenclature...
+			//sync offset = front porch
+			//sync width = sync pulse width
+            
+			hsyncoff = extb[i+8] | ((extb[i+11] & 0xC0) << 2);
+			hsyncwidth = extb[i+9] | ((extb[i+11] & 0x30) << 4);
+			vsyncoff = ((extb[i+10] & 0xf0) >> 4) | ((extb[i+11] & 0x0C) << 2);
+			vsyncwidth = (extb[i+10] & 0x0f) | ((extb[i+11] & 0x03) << 4);
+            
+            
+			sprintf(modearray[currentmode], "%s%u %u %u %u ", modearray[currentmode], hactive, hactive+hsyncoff, hactive+hsyncoff+hsyncwidth, hactive+hblank);
+			sprintf(modearray[currentmode], "%s%u %u %u %u ", modearray[currentmode], vactive, vactive+vsyncoff, vactive+vsyncoff+vsyncwidth, vactive+vblank);
+            
+			if ( (extb[i+17]&0x80) || ((extb[i+17]&0x18) == 0x18) ) {
+				sprintf(modearray[currentmode], "%s%shsync %svsync %s", modearray[currentmode], ((extb[i+17]&0x10) && extb[i+17]&0x02) ? "+": "-", ((extb[i+17]&0x10) && extb[i+17]&0x04) ? "+": "-", (extb[i+17]&0x80) ? "interlace": "");
+                //hehe... there's been at least 2 bugs in the old parse-edid the whole time - somebody caught the htimings one, and I just caught two problems right here - lack of checking for analog sync and getting hsync and vsync backwards... yes, vsync and hsync have been flipped this whole time. Glad I'm rewriting
+                
+			}
+			//printf("\n");
+			currentmode++;
+		}
+	}
+    
+}
+
+int
+parse_edid( byte* edid )
 {
   unsigned i;
   byte* block;
+  struct edid_block *s_edid =(struct edid_block *)edid;
   char* monitor_name = NULL;
   char monitor_alt_name[100];
   byte checksum = 0;
   char *vendor_sign;
   int ret = 0;
   
-  for( i = 0; i < EDID_LENGTH; i++ )
-    checksum += edid[ i ];
+//print_edid(*s_edid);
+    
+   checksum =  check_edid((uint8_t *)s_edid);
+  //for( i = 0; i < EDID_LENGTH; i++ )
+    //checksum += edid[ i ];
 
   if (  checksum != 0  ) {
-      if (!isSilent)
-          MSG( "EDID checksum failed - data is corrupt. Continuing anyway." );
+      MSG( "EDID checksum failed - data is corrupt. Continuing anyway." );
       ret = 1;
-  } else if (!isSilent)
+  } else 
       MSG( "EDID checksum passed." );
   
 
-  if ( strncmp((const char *) edid+EDID_HEADER, (const char *)edid_v1_header, EDID_HEADER_END+1 ) )
+  if ( strncmp( edid+EDID_HEADER, edid_v1_header, EDID_HEADER_END+1 ) )
     {
-        if (!isSilent) {
-            MSG( "first bytes don't match EDID version 1 header" );
-            MSG( "do not trust output (if any)." );
-        }
-        ret = 1;
+      MSG( "first bytes don't match EDID version 1 header" );
+      MSG( "do not trust output (if any)." );
+      ret = 1;
     }
 
-     if (!isSilent)
-         printf( "\n\t# EDID version %d revision %d\n", (int)edid[EDID_STRUCT_VERSION],(int)edid[EDID_STRUCT_REVISION] );
+  printf( "\n\t# EDID version %d revision %d\n", (int)edid[EDID_STRUCT_VERSION],(int)edid[EDID_STRUCT_REVISION] );
 
-    vendor_sign = get_vendor_sign( edid + ID_MANUFACTURER_NAME ); 
+  vendor_sign = get_vendor_sign( edid + ID_MANUFACTURER_NAME ); 
 
-     if (!isSilent)
-         printf( "Section \"Monitor\"\n" );
+  printf( "Section \"Monitor\"\n" );
 
   block = edid + DETAILED_TIMING_DESCRIPTIONS_START;
 
@@ -279,7 +842,7 @@ parse_edid( byte* edid,int isSilent)
 	 block += DETAILED_TIMING_DESCRIPTION_SIZE )
     {
 
-      if ( block_type( block,isSilent ) == MONITOR_NAME )
+      if ( block_type( block ) == MONITOR_NAME )
 	{
 	  monitor_name = get_monitor_name( block );
 	  break;
@@ -296,96 +859,102 @@ parse_edid( byte* edid,int isSilent)
     monitor_name = monitor_alt_name;
   }
 
-    if (!isSilent) {
-        printf( "\tIdentifier \"%s\"\n", monitor_name );
-        printf( "\tVendorName \"%s\"\n", vendor_sign );
-        printf( "\tModelName \"%s\"\n", monitor_name );
-    }
+  printf( "\tIdentifier \"%s\"\n", monitor_name );
+  printf( "\tVendorName \"%s\"\n", vendor_sign );
+  //printf( "\tModelName \"%s\"\n", monitor_name );
+  printf("\tVendorId \"%02X\"\n", s_edid->manufacturerCode);
+  printf("\tProductId \"%02X\"\n", s_edid->productCode);
+ printf("\tManufactureWeek \"%d\"\n", s_edid->manufacturedWeek);
+    printf("\tManufactureYear \"%d\"\n", s_edid->manufacturedYear + 1990);
 
-  block = edid + DETAILED_TIMING_DESCRIPTIONS_START;
-
-  for( i = 0; i < NO_DETAILED_TIMING_DESCRIPTIONS; i++,
-	 block += DETAILED_TIMING_DESCRIPTION_SIZE )
-    {
-
-      if ( block_type( block,isSilent ) == MONITOR_LIMITS )
-	parse_monitor_limits( block ,isSilent);
-    }
-
-  parse_dpms_capabilities(edid[DPMS_FLAGS],isSilent);
-
-  block = edid + DETAILED_TIMING_DESCRIPTIONS_START;
-
-  for( i = 0; i < NO_DETAILED_TIMING_DESCRIPTIONS; i++,
-	 block += DETAILED_TIMING_DESCRIPTION_SIZE )
-    {
-
-      if ( block_type( block ,isSilent) == DETAILED_TIMING_BLOCK )
-	parse_timing_description( block,isSilent );
-    }
     
-    if (!isSilent)
-        printf( "EndSection\n" );
+    if (CHECK_BIT(s_edid->videoInputDefinition, 7))
+        printf("\tSignalType: DigitalSignal\n");
+    else
+        printf("\tSignalType: AnalogSignal\n");
+    printf("\tGamma \"%s\"\n", display_gamma((uint8_t *)s_edid));
+    
+  block = edid + DETAILED_TIMING_DESCRIPTIONS_START;
+
+  for( i = 0; i < NO_DETAILED_TIMING_DESCRIPTIONS; i++,
+	 block += DETAILED_TIMING_DESCRIPTION_SIZE )
+    {
+
+      if ( block_type( block ) == MONITOR_LIMITS )
+	parse_monitor_limits( block );
+    }
+
+  parse_dpms_capabilities(edid[DPMS_FLAGS]);
+
+  block = edid + DETAILED_TIMING_DESCRIPTIONS_START;
+
+  for( i = 0; i < NO_DETAILED_TIMING_DESCRIPTIONS; i++,
+	 block += DETAILED_TIMING_DESCRIPTION_SIZE )
+    {
+
+      if ( block_type( block ) == DETAILED_TIMING_BLOCK )
+	parse_timing_description( block );
+    }
+
+
+    print_description_block((uint8_t *)&(s_edid->descriptionBlock2), 2);
+    print_description_block((uint8_t *)&(s_edid->descriptionBlock3), 3);
+    print_description_block((uint8_t *)&(s_edid->descriptionBlock4), 4);
+    
+  printf( "EndSection\n" );
 
   return ret;
 }
 
 
 int
-parse_timing_description( byte* dtd,int isSilent )
+parse_timing_description( byte* dtd )
 {
   int htotal, vtotal;
   htotal = H_ACTIVE + H_BLANKING;
   vtotal = V_ACTIVE + V_BLANKING;
-    if (!isSilent) {
-        printf( "\tMode \t\"%dx%d\"", H_ACTIVE, V_ACTIVE );
-        printf( "\t# vfreq %3.3fHz, hfreq %6.3fkHz\n",
-               (double)PIXEL_CLOCK/((double)vtotal*(double)htotal),
-               (double)PIXEL_CLOCK/(double)(htotal*1000));
-    }
-    vfreq = (double)PIXEL_CLOCK/((double)vtotal*(double)htotal);
-    
-    if (!isSilent) {
-        printf( "\t\tDotClock\t%f\n", (double)PIXEL_CLOCK/1000000.0 );
+  
+  printf( "\tMode \t\"%dx%d\"", H_ACTIVE, V_ACTIVE );
+  printf( "\t# vfreq %3.3fHz, hfreq %6.3fkHz\n",
+	  (double)PIXEL_CLOCK/((double)vtotal*(double)htotal),
+	  (double)PIXEL_CLOCK/(double)(htotal*1000));
 
-        printf( "\t\tHTimings\t%u %u %u %u\n", H_ACTIVE,
-               H_ACTIVE+H_SYNC_OFFSET, 
-               H_ACTIVE+H_SYNC_OFFSET+H_SYNC_WIDTH,
-               htotal );
+  printf( "\t\tDotClock\t%f\n", (double)PIXEL_CLOCK/1000000.0 );
 
-        printf( "\t\tVTimings\t%u %u %u %u\n", V_ACTIVE,
-               V_ACTIVE+V_SYNC_OFFSET,
-               V_ACTIVE+V_SYNC_OFFSET+V_SYNC_WIDTH,
-               vtotal );
-    }
-    
-    if ( INTERLACED || (SYNC_TYPE == SYNC_SEPARATE)) {
-        if (!isSilent)
-            printf( "\t\tFlags\t%s\"%sHSync\" \"%sVSync\"\n",
-                   INTERLACED ? "\"Interlace\" ": "",
-                   HSYNC_POSITIVE ? "+": "-",
-                   VSYNC_POSITIVE ? "+": "-");
-    }
+  printf( "\t\tHTimings\t%u %u %u %u\n", H_ACTIVE,
+	  H_ACTIVE+H_SYNC_OFFSET, 
+	  H_ACTIVE+H_SYNC_OFFSET+H_SYNC_WIDTH,
+	  htotal );
 
-    if (!isSilent)
-        printf( "\tEndMode\n" );
+  printf( "\t\tVTimings\t%u %u %u %u\n", V_ACTIVE,
+	  V_ACTIVE+V_SYNC_OFFSET,
+	  V_ACTIVE+V_SYNC_OFFSET+V_SYNC_WIDTH,
+	  vtotal );
+
+  if ( INTERLACED || (SYNC_TYPE == SYNC_SEPARATE)) {
+    printf( "\t\tFlags\t%s\"%sHSync\" \"%sVSync\"\n",
+	INTERLACED ? "\"Interlace\" ": "",
+	HSYNC_POSITIVE ? "+": "-",
+	VSYNC_POSITIVE ? "+": "-");
+  }
+
+  printf( "\tEndMode\n" );
 
   return 0;
 }
 
 
 int
-block_type( byte* block ,int isSilent )
+block_type( byte* block )
 {
-  if ( !strncmp( (const char *)edid_v1_descriptor_flag, (const char *)block, 2 ) )
+  if ( !strncmp( edid_v1_descriptor_flag, block, 2 ) )
     {
-        if (!isSilent)
-            printf("\t# Block type: 2:%x 3:%x\n", block[2], block[3]);
+      printf("\t# Block type: 2:%x 3:%x\n", block[2], block[3]);
 
       /* descriptor */
 
       if ( block[ 2 ] != 0 )
-          return UNKNOWN_DESCRIPTOR;
+	return UNKNOWN_DESCRIPTOR;
 
 
       return block[ 3 ];
@@ -442,38 +1011,30 @@ char* get_vendor_sign( byte const* block )
 }
 
 int
-parse_monitor_limits( byte* block,int isSilent  )
+parse_monitor_limits( byte* block )
 {
-    if (!isSilent) {
-        printf( "\tHorizSync %u-%u\n", H_MIN_RATE, H_MAX_RATE );
-        printf( "\tVertRefresh %u-%u\n", V_MIN_RATE, V_MAX_RATE );
-    }
-    if ( MAX_PIXEL_CLOCK == 10*0xff ) {
-        if (!isSilent)
-            printf( "\t# Max dot clock not given\n" );
-    }
-    else {
-        if (!isSilent)
-            printf( "\t# Max dot clock (video bandwidth) %u MHz\n", (int)MAX_PIXEL_CLOCK );
-    }
+  printf( "\tHorizSync %u-%u\n", H_MIN_RATE, H_MAX_RATE );
+  printf( "\tVertRefresh %u-%u\n", V_MIN_RATE, V_MAX_RATE );
+  if ( MAX_PIXEL_CLOCK == 10*0xff )
+    printf( "\t# Max dot clock not given\n" );
+  else
+    printf( "\t# Max dot clock (video bandwidth) %u MHz\n", (int)MAX_PIXEL_CLOCK );
 
   if ( GTF_SUPPORT )
     {
-        if (!isSilent)
-            printf( "\t# EDID version 3 GTF given: contact author\n" );
+      printf( "\t# EDID version 3 GTF given: contact author\n" );
     }
   
   return 0;
 }
 
 int
-parse_dpms_capabilities(byte flags,int isSilent )
+parse_dpms_capabilities(byte flags)
 {
-    if (!isSilent)
-        printf("\t# DPMS capabilities: Active off:%s  Suspend:%s  Standby:%s\n\n",
-               (flags & DPMS_ACTIVE_OFF) ? "yes" : "no",
-               (flags & DPMS_SUSPEND)    ? "yes" : "no",
-               (flags & DPMS_STANDBY)    ? "yes" : "no");
+  printf("\t# DPMS capabilities: Active off:%s  Suspend:%s  Standby:%s\n\n",
+    (flags & DPMS_ACTIVE_OFF) ? "yes" : "no",
+    (flags & DPMS_SUSPEND)    ? "yes" : "no",
+    (flags & DPMS_STANDBY)    ? "yes" : "no");
   return 0;
 }
     

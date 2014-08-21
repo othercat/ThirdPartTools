@@ -3,6 +3,12 @@ ThirdPartTools
 
 	My own modified tools from third parties
 
+## Histroy
+
+2014-08-21
+
+Remove all the Cocoapods support as I use `gem` one.
+Add more EDID parser from <http://www.polypux.org/projects/read-edid/>
 
 ## What is in it
 
